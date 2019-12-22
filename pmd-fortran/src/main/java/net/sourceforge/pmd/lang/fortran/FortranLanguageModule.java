@@ -1,13 +1,17 @@
 /**
  * BSD-style license; for more info see http://pmd.sourceforge.net/license.html
  */
+
 package net.sourceforge.pmd.lang.fortran;
 
 import net.sourceforge.pmd.lang.BaseLanguageModule;
 
 /**
  * Implementation for the Fortran Language Module
+ *
+ * @deprecated There is no full PMD support for fortran.
  */
+@Deprecated
 public class FortranLanguageModule extends BaseLanguageModule {
 
     /** The name */

@@ -1,6 +1,7 @@
 /**
  * BSD-style license; for more info see http://pmd.sourceforge.net/license.html
  */
+
 package net.sourceforge.pmd;
 
 import java.util.List;
@@ -16,20 +17,20 @@ import net.sourceforge.pmd.lang.rule.AbstractRule;
 public class FooRule extends AbstractRule {
     public FooRule() {
         setLanguage(LanguageRegistry.getLanguage(DummyLanguageModule.NAME));
+        setName("Foo");
     }
 
+    @Override
     public String getMessage() {
         return "blah";
     }
 
-    public String getName() {
-        return "Foo";
-    }
-
+    @Override
     public String getRuleSetName() {
         return "RuleSet";
     }
 
+    @Override
     public String getDescription() {
         return "desc";
     }

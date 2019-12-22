@@ -1,9 +1,13 @@
 /**
  * BSD-style license; for more info see http://pmd.sourceforge.net/license.html
  */
+
 package net.sourceforge.pmd;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -13,13 +17,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
+
 import net.sourceforge.pmd.lang.dfa.report.ReportTree;
+import net.sourceforge.pmd.lang.rule.stat.StatisticalRule;
 import net.sourceforge.pmd.renderers.AbstractAccumulatingRenderer;
 import net.sourceforge.pmd.stat.Metric;
 import net.sourceforge.pmd.util.DateTimeUtil;
-import net.sourceforge.pmd.util.EmptyIterator;
 import net.sourceforge.pmd.util.NumericConstants;
-import net.sourceforge.pmd.util.StringUtil;
 
 /**
  * A {@link Report} collects all informations during a PMD execution. This
@@ -39,9 +44,9 @@ public class Report implements Iterable<RuleViolation> {
     // a bit
     private final List<RuleViolation> violations = new ArrayList<>();
     private final Set<Metric> metrics = new HashSet<>();
-    private final List<SynchronizedReportListener> listeners = new ArrayList<>();
+    private final List<ThreadSafeReportListener> listeners = new ArrayList<>();
     private List<ProcessingError> errors;
-    private List<RuleConfigurationError> configErrors;
+    private List<ConfigurationError> configErrors;
     private Map<Integer, String> linesToSuppress = new HashMap<>();
     private long start;
     private long end;
@@ -50,18 +55,19 @@ public class Report implements Iterable<RuleViolation> {
     /**
      * Creates a new, initialized, empty report for the given file name.
      *
-     * @param ctx The context to use to connect to the report
-     * @param fileName the filename used to report any violations
+     * @param ctx
+     *            The context to use to connect to the report
+     * @param fileName
+     *            the filename used to report any violations
      * @return the new report
      */
     public static Report createReport(RuleContext ctx, String fileName) {
         Report report = new Report();
 
         // overtake the listener
-        report.addSynchronizedListeners(ctx.getReport().getSynchronizedListeners());
+        report.addListeners(ctx.getReport().getListeners());
 
         ctx.setReport(report);
-        ctx.setSourceCodeFilename(fileName);
         ctx.setSourceCodeFile(new File(fileName));
         return report;
     }
@@ -75,15 +81,16 @@ public class Report implements Iterable<RuleViolation> {
         /**
          * Creates a new duration.
          *
-         * @param duration the duration in milliseconds.
+         * @param duration
+         *            the duration in milliseconds.
          */
         public ReadableDuration(long duration) {
             this.duration = duration;
         }
 
         /**
-         * Gets a human readable representation of the duration, such as
-         * "1h 3m 5s".
+         * Gets a human readable representation of the duration, such as "1h 3m
+         * 5s".
          *
          * @return human readable representation of the duration
          */
@@ -95,17 +102,19 @@ public class Report implements Iterable<RuleViolation> {
     /**
      * Represents a configuration error.
      */
-    public static class RuleConfigurationError {
+    public static class ConfigurationError {
         private final Rule rule;
         private final String issue;
 
         /**
-         * Creates a new configuration error.
+         * Creates a new configuration error for a specific rule.
          *
-         * @param theRule the rule which is configured wrongly
-         * @param theIssue the reason, why the configuration is wrong
+         * @param theRule
+         *            the rule which is configured wrongly
+         * @param theIssue
+         *            the reason, why the configuration is wrong
          */
-        public RuleConfigurationError(Rule theRule, String theIssue) {
+        public ConfigurationError(Rule theRule, String theIssue) {
             rule = theRule;
             issue = theIssue;
         }
@@ -133,26 +142,43 @@ public class Report implements Iterable<RuleViolation> {
      * Represents a processing error, such as a parse error.
      */
     public static class ProcessingError {
-        private final String msg;
+        private final Throwable error;
         private final String file;
 
         /**
          * Creates a new processing error
          *
-         * @param msg the error message
-         * @param file the file during which the error occurred
+         * @param error
+         *            the error
+         * @param file
+         *            the file during which the error occurred
          */
-        public ProcessingError(String msg, String file) {
-            this.msg = msg;
+        public ProcessingError(Throwable error, String file) {
+            this.error = error;
             this.file = file;
         }
 
         public String getMsg() {
-            return msg;
+            return error.getClass().getSimpleName() + ": " + error.getMessage();
+        }
+
+        public String getDetail() {
+            try (StringWriter stringWriter = new StringWriter();
+                    PrintWriter writer = new PrintWriter(stringWriter)) {
+                error.printStackTrace(writer);
+                return stringWriter.toString();
+            } catch (IOException e) {
+                // IOException on close - should never happen when using StringWriter
+                throw new RuntimeException(e);
+            }
         }
 
         public String getFile() {
             return file;
+        }
+
+        public Throwable getError() {
+            return error;
         }
     }
 
@@ -167,12 +193,14 @@ public class Report implements Iterable<RuleViolation> {
         /**
          * Creates a suppressed violation.
          *
-         * @param rv the actual violation, that has been suppressed
-         * @param isNOPMD the suppression mode: <code>true</code> if it is
+         * @param rv
+         *            the actual violation, that has been suppressed
+         * @param isNOPMD
+         *            the suppression mode: <code>true</code> if it is
          *            suppressed via a NOPMD comment, <code>false</code> if
          *            suppressed via annotations.
-         * @param userMessage contains the suppressed code line or
-         *            <code>null</code>
+         * @param userMessage
+         *            contains the suppressed code line or <code>null</code>
          */
         public SuppressedViolation(RuleViolation rv, boolean isNOPMD, String userMessage) {
             this.isNOPMD = isNOPMD;
@@ -214,7 +242,8 @@ public class Report implements Iterable<RuleViolation> {
     /**
      * Configure the lines, that are suppressed via a NOPMD comment.
      *
-     * @param lines the suppressed lines
+     * @param lines
+     *            the suppressed lines
      */
     public void suppress(Map<Integer, String> lines) {
         linesToSuppress = lines;
@@ -222,7 +251,7 @@ public class Report implements Iterable<RuleViolation> {
 
     private static String keyFor(RuleViolation rv) {
 
-        return StringUtil.isNotEmpty(rv.getPackageName()) ? rv.getPackageName() + '.' + rv.getClassName() : "";
+        return StringUtils.isNotBlank(rv.getPackageName()) ? rv.getPackageName() + '.' + rv.getClassName() : "";
     }
 
     /**
@@ -247,7 +276,7 @@ public class Report implements Iterable<RuleViolation> {
     /**
      * Calculate a summary of violations per rule.
      *
-     * @return a Map summarizing the Report: String (rule name) ->Integer (count
+     * @return a Map summarizing the Report: String (rule name) -&gt; Integer (count
      *         of violations)
      */
     public Map<String, Integer> getSummary() {
@@ -266,10 +295,11 @@ public class Report implements Iterable<RuleViolation> {
     /**
      * Registers a report listener
      *
-     * @param listener the listener
+     * @param listener
+     *            the listener
      */
-    public void addListener(ReportListener listener) {
-        listeners.add(new SynchronizedReportListener(listener));
+    public void addListener(ThreadSafeReportListener listener) {
+        listeners.add(listener);
     }
 
     public List<SuppressedViolation> getSuppressedRuleViolations() {
@@ -279,7 +309,8 @@ public class Report implements Iterable<RuleViolation> {
     /**
      * Adds a new rule violation to the report and notify the listeners.
      *
-     * @param violation the violation to add
+     * @param violation
+     *            the violation to add
      */
     public void addRuleViolation(RuleViolation violation) {
 
@@ -298,7 +329,7 @@ public class Report implements Iterable<RuleViolation> {
         int index = Collections.binarySearch(violations, violation, RuleViolationComparator.INSTANCE);
         violations.add(index < 0 ? -index - 1 : index, violation);
         violationTree.addRuleViolation(violation);
-        for (ReportListener listener : listeners) {
+        for (ThreadSafeReportListener listener : listeners) {
             listener.ruleViolationAdded(violation);
         }
     }
@@ -306,11 +337,15 @@ public class Report implements Iterable<RuleViolation> {
     /**
      * Adds a new metric to the report and notify the listeners
      *
-     * @param metric the metric to add
+     * @param metric
+     *            the metric to add
+     *
+     * @deprecated see {@link StatisticalRule}
      */
+    @Deprecated
     public void addMetric(Metric metric) {
         metrics.add(metric);
-        for (ReportListener listener : listeners) {
+        for (ThreadSafeReportListener listener : listeners) {
             listener.metricAdded(metric);
         }
     }
@@ -318,9 +353,10 @@ public class Report implements Iterable<RuleViolation> {
     /**
      * Adds a new configuration error to the report.
      *
-     * @param error the error to add
+     * @param error
+     *            the error to add
      */
-    public void addConfigError(RuleConfigurationError error) {
+    public void addConfigError(ConfigurationError error) {
         if (configErrors == null) {
             configErrors = new ArrayList<>();
         }
@@ -330,7 +366,8 @@ public class Report implements Iterable<RuleViolation> {
     /**
      * Adds a new processing error to the report.
      *
-     * @param error the error to add
+     * @param error
+     *            the error to add
      */
     public void addError(ProcessingError error) {
         if (errors == null) {
@@ -344,13 +381,18 @@ public class Report implements Iterable<RuleViolation> {
      * summary over all violations is needed as PMD creates one report per file
      * by default.
      *
-     * @param r the report to be merged into this.
+     * @param r
+     *            the report to be merged into this.
      * @see AbstractAccumulatingRenderer
      */
     public void merge(Report r) {
         Iterator<ProcessingError> i = r.errors();
         while (i.hasNext()) {
             addError(i.next());
+        }
+        Iterator<ConfigurationError> ce = r.configErrors();
+        while (ce.hasNext()) {
+            addConfigError(ce.next());
         }
         Iterator<Metric> m = r.metrics();
         while (m.hasNext()) {
@@ -374,7 +416,10 @@ public class Report implements Iterable<RuleViolation> {
      *
      * @return <code>true</code> if there are metrics, <code>false</code>
      *         otherwise
+     *
+     * @deprecated see {@link StatisticalRule}
      */
+    @Deprecated
     public boolean hasMetrics() {
         return !metrics.isEmpty();
     }
@@ -383,7 +428,10 @@ public class Report implements Iterable<RuleViolation> {
      * Iterate over the metrics.
      *
      * @return an iterator over the metrics
+     *
+     * @deprecated see {@link StatisticalRule}
      */
+    @Deprecated
     public Iterator<Metric> metrics() {
         return metrics.iterator();
     }
@@ -442,7 +490,7 @@ public class Report implements Iterable<RuleViolation> {
      * @return the iterator
      */
     public Iterator<ProcessingError> errors() {
-        return errors == null ? EmptyIterator.<ProcessingError> instance() : errors.iterator();
+        return errors == null ? Collections.<ProcessingError>emptyIterator() : errors.iterator();
     }
 
     /**
@@ -450,8 +498,8 @@ public class Report implements Iterable<RuleViolation> {
      *
      * @return the iterator
      */
-    public Iterator<RuleConfigurationError> configErrors() {
-        return configErrors == null ? EmptyIterator.<RuleConfigurationError> instance() : configErrors.iterator();
+    public Iterator<ConfigurationError> configErrors() {
+        return configErrors == null ? Collections.<ConfigurationError>emptyIterator() : configErrors.iterator();
     }
 
     /**
@@ -495,16 +543,17 @@ public class Report implements Iterable<RuleViolation> {
         return end - start;
     }
 
-    public List<SynchronizedReportListener> getSynchronizedListeners() {
+    public List<ThreadSafeReportListener> getListeners() {
         return listeners;
     }
 
     /**
      * Adds all given listeners to this report
      *
-     * @param synchronizedListeners the report listeners
+     * @param allListeners
+     *            the report listeners
      */
-    public void addSynchronizedListeners(List<SynchronizedReportListener> synchronizedListeners) {
-        listeners.addAll(synchronizedListeners);
+    public void addListeners(List<ThreadSafeReportListener> allListeners) {
+        listeners.addAll(allListeners);
     }
 }

@@ -1,80 +1,84 @@
 /**
  * BSD-style license; for more info see http://pmd.sourceforge.net/license.html
  */
+
 package net.sourceforge.pmd.lang.ast.xpath.saxon;
+
+import java.util.List;
+
+import net.sourceforge.pmd.annotation.InternalApi;
+import net.sourceforge.pmd.lang.ast.xpath.Attribute;
+import net.sourceforge.pmd.lang.rule.xpath.SaxonXPathRuleQuery;
 
 import net.sf.saxon.om.NodeInfo;
 import net.sf.saxon.om.SequenceIterator;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.type.Type;
-import net.sf.saxon.value.BooleanValue;
-import net.sf.saxon.value.EmptySequence;
-import net.sf.saxon.value.Int64Value;
-import net.sf.saxon.value.StringValue;
 import net.sf.saxon.value.Value;
-import net.sourceforge.pmd.lang.ast.xpath.Attribute;
 
 /**
  * A Saxon OM Attribute node for an AST Node Attribute.
+ * Belongs to an {@link ElementNode}, and wraps an
+ * {@link Attribute}.
  */
+@Deprecated
+@InternalApi
 public class AttributeNode extends AbstractNodeInfo {
     protected final Attribute attribute;
     protected final int id;
     protected Value value;
 
+
+    /**
+     * Creates a new AttributeNode from a PMD Attribute.
+     *
+     * @param id The index within the attribute order
+     */
     public AttributeNode(Attribute attribute, int id) {
-	this.attribute = attribute;
-	this.id = id;
+        this.attribute = attribute;
+        this.id = id;
     }
 
     @Override
     public int getNodeKind() {
-	return Type.ATTRIBUTE;
+        return Type.ATTRIBUTE;
     }
 
     @Override
     public String getLocalPart() {
-	return attribute.getName();
+        return attribute.getName();
     }
 
     @Override
     public String getURI() {
-	return "";
+        return "";
     }
 
     @Override
-    public Value atomize() throws XPathException {
-	if (value == null) {
-	    Object v = attribute.getValue();
-	    // TODO Need to handle the full range of types, is there something Saxon can do to help?
-	    if (v instanceof String) {
-		value = new StringValue((String) v);
-	    } else if (v instanceof Boolean) {
-		value = BooleanValue.get(((Boolean) v).booleanValue());
-	    } else if (v instanceof Integer) {
-		value = Int64Value.makeIntegerValue((Integer) v);
-	    } else if (v == null) {
-		value = EmptySequence.getInstance();
-	    } else {
-		throw new RuntimeException("Unable to create ValueRepresentaton for attribute value: " + v
-			+ " of type " + v.getClass());
-	    }
-	}
-	return value;
+    public Value atomize() {
+        if (value == null) {
+            Object data = attribute.getValue();
+            if (data instanceof List) {
+                value = SaxonXPathRuleQuery.getSequenceRepresentation((List<?>) data);
+            } else {
+                value = SaxonXPathRuleQuery.getAtomicRepresentation(attribute.getValue());
+            }
+        }
+        return value;
     }
 
     @Override
     public CharSequence getStringValueCS() {
-	return attribute.getStringValue();
+        return attribute.getStringValue();
     }
 
     @Override
     public SequenceIterator getTypedValue() throws XPathException {
-	return atomize().iterate();
+        return atomize().iterate();
     }
 
     @Override
     public int compareOrder(NodeInfo other) {
-	return Integer.signum(this.id - ((AttributeNode) other).id);
+        return Integer.signum(this.id - ((AttributeNode) other).id);
     }
 }

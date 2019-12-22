@@ -1,20 +1,23 @@
 /**
  * BSD-style license; for more info see http://pmd.sourceforge.net/license.html
  */
+
 package net.sourceforge.pmd.lang.java.rule;
 
+import java.util.Iterator;
 import java.util.Set;
 
 import net.sourceforge.pmd.Rule;
 import net.sourceforge.pmd.RuleContext;
+import net.sourceforge.pmd.RuleViolation;
 import net.sourceforge.pmd.lang.ast.Node;
-import net.sourceforge.pmd.lang.java.ast.ASTClassOrInterfaceDeclaration;
 import net.sourceforge.pmd.lang.java.ast.ASTCompilationUnit;
 import net.sourceforge.pmd.lang.java.ast.ASTFieldDeclaration;
 import net.sourceforge.pmd.lang.java.ast.ASTFormalParameter;
 import net.sourceforge.pmd.lang.java.ast.ASTLocalVariableDeclaration;
 import net.sourceforge.pmd.lang.java.ast.ASTVariableDeclarator;
 import net.sourceforge.pmd.lang.java.ast.ASTVariableDeclaratorId;
+import net.sourceforge.pmd.lang.java.ast.AbstractAnyTypeDeclaration;
 import net.sourceforge.pmd.lang.java.ast.AccessNode;
 import net.sourceforge.pmd.lang.java.ast.CanSuppressWarnings;
 import net.sourceforge.pmd.lang.java.ast.JavaNode;
@@ -35,7 +38,9 @@ import net.sourceforge.pmd.lang.symboltable.Scope;
  * <li>Variable name</li>
  * <li>Suppression indicator</li>
  * </ul>
+ * @deprecated See {@link RuleViolation}
  */
+@Deprecated
 public class JavaRuleViolation extends ParametricRuleViolation<JavaNode> {
 
     public JavaRuleViolation(Rule rule, RuleContext ctx, JavaNode node, String message, int beginLine, int endLine) {
@@ -73,9 +78,12 @@ public class JavaRuleViolation extends ParametricRuleViolation<JavaNode> {
     /**
      * Check for suppression on this node, on parents, and on contained types
      * for ASTCompilationUnit
-     * 
+     *
      * @param node
+     *
+     * @deprecated Is internal API, not useful, there's a typo. See <a href="https://github.com/pmd/pmd/pull/1927">#1927</a>
      */
+    @Deprecated
     public static boolean isSupressed(Node node, Rule rule) {
         boolean result = suppresses(node, rule);
 
@@ -96,7 +104,12 @@ public class JavaRuleViolation extends ParametricRuleViolation<JavaNode> {
 
     private void setClassNameFrom(JavaNode node) {
         String qualifiedName = null;
-        for (ASTClassOrInterfaceDeclaration parent : node.getParentsOfType(ASTClassOrInterfaceDeclaration.class)) {
+
+        if (node.getScope() instanceof ClassScope) {
+            qualifiedName = ((ClassScope) node.getScope()).getClassName();
+        }
+
+        for (AbstractAnyTypeDeclaration parent : node.getParentsOfType(AbstractAnyTypeDeclaration.class)) {
             String clsName = parent.getScope().getEnclosingScope(ClassScope.class).getClassName();
             if (qualifiedName == null) {
                 qualifiedName = clsName;
@@ -106,13 +119,27 @@ public class JavaRuleViolation extends ParametricRuleViolation<JavaNode> {
         }
 
         if (qualifiedName == null) {
-            Set<ClassNameDeclaration> classes = node.getScope().getEnclosingScope(SourceFileScope.class).getClassDeclarations().keySet();
+            Set<ClassNameDeclaration> classes = node.getScope().getEnclosingScope(SourceFileScope.class)
+                    .getClassDeclarations().keySet();
             for (ClassNameDeclaration c : classes) {
                 // find the first public class/enum declaration
                 if (c.getAccessNodeParent() instanceof AccessNode) {
-                    if (((AccessNode)c.getAccessNodeParent()).isPublic()) {
+                    if (((AccessNode) c.getAccessNodeParent()).isPublic()) {
                         qualifiedName = c.getImage();
                         break;
+                    }
+                }
+            }
+
+            // Still not found?
+            if (qualifiedName == null) {
+                for (ClassNameDeclaration c : classes) {
+                    // find the first package-private class/enum declaration
+                    if (c.getAccessNodeParent() instanceof AccessNode) {
+                        if (((AccessNode) c.getAccessNodeParent()).isPackagePrivate()) {
+                            qualifiedName = c.getImage();
+                            break;
+                        }
                     }
                 }
             }
@@ -128,11 +155,23 @@ public class JavaRuleViolation extends ParametricRuleViolation<JavaNode> {
                 && ((CanSuppressWarnings) node).hasSuppressWarningsAnnotationFor(rule);
     }
 
+    private String getVariableNames(Iterable<ASTVariableDeclaratorId> iterable) {
+
+        Iterator<ASTVariableDeclaratorId> it = iterable.iterator();
+        StringBuilder builder = new StringBuilder();
+        builder.append(it.next());
+
+        while (it.hasNext()) {
+            builder.append(", ").append(it.next());
+        }
+        return builder.toString();
+    }
+
     private void setVariableNameIfExists(Node node) {
         if (node instanceof ASTFieldDeclaration) {
-            variableName = ((ASTFieldDeclaration) node).getVariableName();
+            variableName = getVariableNames((ASTFieldDeclaration) node);
         } else if (node instanceof ASTLocalVariableDeclaration) {
-            variableName = ((ASTLocalVariableDeclaration) node).getVariableName();
+            variableName = getVariableNames((ASTLocalVariableDeclaration) node);
         } else if (node instanceof ASTVariableDeclarator) {
             variableName = node.jjtGetChild(0).getImage();
         } else if (node instanceof ASTVariableDeclaratorId) {

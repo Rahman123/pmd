@@ -1,6 +1,7 @@
 /**
  * BSD-style license; for more info see http://pmd.sourceforge.net/license.html
  */
+
 package net.sourceforge.pmd.lang.jsp.ast;
 
 import net.sourceforge.pmd.lang.ast.AbstractNode;
@@ -18,27 +19,30 @@ public class AbstractJspNode extends AbstractNode implements JspNode {
         this.parser = parser;
     }
 
+    @Override
     public void jjtOpen() {
-	if (beginLine == -1 && parser.token.next != null) {
-	    beginLine = parser.token.next.beginLine;
-	    beginColumn = parser.token.next.beginColumn;
-	}
+        if (beginLine == -1 && parser.token.next != null) {
+            beginLine = parser.token.next.beginLine;
+            beginColumn = parser.token.next.beginColumn;
+        }
     }
 
+    @Override
     public void jjtClose() {
-	if (beginLine == -1 && (children == null || children.length == 0)) {
-	    beginColumn = parser.token.beginColumn;
-	}
-	if (beginLine == -1) {
-	    beginLine = parser.token.beginLine;
-	}
-	endLine = parser.token.endLine;
-	endColumn = parser.token.endColumn;
+        if (beginLine == -1 && (children == null || children.length == 0)) {
+            beginColumn = parser.token.beginColumn;
+        }
+        if (beginLine == -1) {
+            beginLine = parser.token.beginLine;
+        }
+        endLine = parser.token.endLine;
+        endColumn = parser.token.endColumn;
     }
 
     /**
      * Accept the visitor. *
      */
+    @Override
     public Object jjtAccept(JspParserVisitor visitor, Object data) {
         return visitor.visit(this, data);
     }
@@ -46,6 +50,7 @@ public class AbstractJspNode extends AbstractNode implements JspNode {
     /**
      * Accept the visitor. *
      */
+    @Override
     public Object childrenAccept(JspParserVisitor visitor, Object data) {
         if (children != null) {
             for (int i = 0; i < children.length; ++i) {
@@ -55,7 +60,11 @@ public class AbstractJspNode extends AbstractNode implements JspNode {
         return data;
     }
 
-    public String toString() {
+
+
+
+    @Override
+    public String getXPathNodeName() {
         return JspParserTreeConstants.jjtNodeName[id];
     }
 }

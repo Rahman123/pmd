@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<test-data>
+<test-data
+    xmlns="http://pmd.sourceforge.net/rule-tests"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://pmd.sourceforge.net/rule-tests http://pmd.sourceforge.net/rule-tests_1_0_0.xsd">
     <test-code>
         <description><![CDATA[
 failure case
@@ -382,8 +385,8 @@ public class Foo {
         <description><![CDATA[
 Not ok, since inner classes are checked
      ]]></description>
-        <expected-problems>1</expected-problems>
         <rule-property name="checkInnerClasses">true</rule-property>
+        <expected-problems>1</expected-problems>
         <code><![CDATA[
 public class Foo {
     private class Bar {
@@ -405,8 +408,8 @@ public class Foo {
         <description><![CDATA[
 Not ok, violation with first usage = non-assignment
      ]]></description>
-        <expected-problems>1</expected-problems>
         <rule-property name="disallowNotAssignment">true</rule-property>
+        <expected-problems>1</expected-problems>
         <code><![CDATA[
 public class Foo {
  private int x;
@@ -529,6 +532,171 @@ public enum Supplier {
 
     public static String getSupplierNameIfPresent(String supplier) {
         return Optional.ofNullable(supplier).map(foo -> valueOf(supplier).supplierName).orElse("");
+    }
+}
+        ]]></code>
+    </test-code>
+
+    <test-code>
+        <description>#1494 [java] SingularField: lombok.Data false positive - part1</description>
+        <expected-problems>0</expected-problems>
+        <code><![CDATA[
+import lombok.Data;
+
+@Data
+public class MyClass {
+
+    private String field1;
+
+    public MyClass(String field1) {
+        this.field1 = field1;
+    }
+}
+        ]]></code>
+    </test-code>
+
+    <test-code>
+        <description>#1494 [java] SingularField: lombok.Data false positive - part2</description>
+        <expected-problems>0</expected-problems>
+        <code><![CDATA[
+import lombok.Getter;
+
+public class MyClass {
+
+    @Getter
+    private String field1;
+
+    public MyClass(String field1) {
+        this.field1 = field1;
+    }
+}
+        ]]></code>
+    </test-code>
+
+    <test-code>
+        <description>[java] SingularField: Lombok false positive with inner class and annotated outer class</description>
+        <expected-problems>0</expected-problems>
+        <code><![CDATA[
+import lombok.Data;
+
+@Data
+public class Outer {
+    public class Inner {
+        private String innerField;
+    }
+
+    private String outerField;
+
+    public Outer(String outerField) {
+        this.outerField = outerField;
+    }
+}
+        ]]></code>
+    </test-code>
+
+    <test-code>
+        <description>[java] SingularField: Lombok false positive with annotated inner class</description>
+        <expected-problems>1</expected-problems>
+        <code><![CDATA[
+import lombok.Data;
+
+public class Outer {
+    @Data
+    public class Inner {
+        private String innerField;
+    }
+
+    private String outerField;
+
+    public Outer(String outerField) {
+        this.outerField = outerField;
+    }
+}
+        ]]></code>
+    </test-code>
+
+    <test-code>
+        <description>#177 [java] SingularField with lambdas as final fields</description>
+        <expected-problems>0</expected-problems>
+        <code><![CDATA[
+/** Dummy class. */
+public final class Test {
+  private Timer timer1;
+  private Timer timer2;
+
+  /** Dummy constructor. */
+  public Timer() {
+    this.timer1 = new Timer(0, e -> {
+      // do nothing for now
+    });
+    this.timer2 = new Timer(0, e -> {
+      // do nothing for now
+    });
+  }
+
+  /** Use a lambda expression to reference timer1 -- triggers SingularField error. */
+  private final Runnable play1 = () -> {
+    this.timer1.start();
+  };
+
+  /** Use an anonymous class to reference timer2 -- no error. */
+  private final Runnable play2 = new Runnable() {
+    @Override
+    public void run() {
+      this.timer2.start();
+    }
+  };
+}
+        ]]></code>
+    </test-code>
+
+    <test-code>
+        <description>#527 [java] Lombok getter annotation on enum is not recognized correctly</description>
+        <expected-problems>0</expected-problems>
+        <code><![CDATA[
+import lombok.Getter;
+
+@Getter
+public enum Foo {
+    BAR(1);
+
+    private final int number;
+
+    Foo(final int number) {
+        this.number = number;
+    }
+}
+        ]]></code>
+    </test-code>
+
+    <test-code>
+        <description>#1056 [java] Property ignoredAnnotations does not work for SingularField and ImmutableField</description>
+        <rule-property name="ignoredAnnotations">java.lang.Deprecated</rule-property>
+        <expected-problems>0</expected-problems>
+        <code><![CDATA[
+public class Source {
+    @Deprecated
+    private Object o; //violation!
+
+    Object m() {
+        o = new Object();
+        return o;
+    }
+}
+        ]]></code>
+    </test-code>
+
+    <test-code>
+        <description>#1703 SingularField: False-positive with @Delegate</description>
+        <expected-problems>0</expected-problems>
+        <code><![CDATA[
+import lombok.experimental.Delegate;
+
+public class Foo {
+    @Delegate private String bar;
+
+    public void set(String s) {
+        bar = s;
     }
 }
         ]]></code>

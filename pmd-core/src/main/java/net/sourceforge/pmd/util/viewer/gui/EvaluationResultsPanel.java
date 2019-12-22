@@ -1,11 +1,11 @@
 /**
  * BSD-style license; for more info see http://pmd.sourceforge.net/license.html
  */
+
 package net.sourceforge.pmd.util.viewer.gui;
 
 import java.awt.BorderLayout;
 import java.util.Vector;
-
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -24,6 +24,7 @@ import net.sourceforge.pmd.util.viewer.model.ViewerModelListener;
  * @author Boris Gruschko ( boris at gruschko.org )
  * @version $Id$
  */
+@Deprecated // to be removed with PMD 7.0.0
 public class EvaluationResultsPanel extends JPanel implements ViewerModelListener {
     private ViewerModel model;
     private JList list;
@@ -31,7 +32,8 @@ public class EvaluationResultsPanel extends JPanel implements ViewerModelListene
     /**
      * constructs the panel
      *
-     * @param model model to refer to
+     * @param model
+     *            model to refer to
      */
     public EvaluationResultsPanel(ViewerModel model) {
         super(new BorderLayout());
@@ -48,6 +50,7 @@ public class EvaluationResultsPanel extends JPanel implements ViewerModelListene
         list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         list.addListSelectionListener(new ListSelectionListener() {
+            @Override
             public void valueChanged(ListSelectionEvent e) {
                 if (list.getSelectedValue() != null) {
                     model.selectNode((Node) list.getSelectedValue(), EvaluationResultsPanel.this);
@@ -61,24 +64,25 @@ public class EvaluationResultsPanel extends JPanel implements ViewerModelListene
     /**
      * @see ViewerModelListener#viewerModelChanged(ViewerModelEvent)
      */
+    @Override
     @SuppressWarnings("PMD.UseArrayListInsteadOfVector")
     public void viewerModelChanged(ViewerModelEvent e) {
         switch (e.getReason()) {
-            case ViewerModelEvent.PATH_EXPRESSION_EVALUATED:
+        case ViewerModelEvent.PATH_EXPRESSION_EVALUATED:
 
-                if (e.getSource() != this) {
-                    list.setListData(new Vector(model.getLastEvaluationResults()));
-                }
+            if (e.getSource() != this) {
+                list.setListData(new Vector(model.getLastEvaluationResults()));
+            }
 
-                break;
+            break;
 
-            case ViewerModelEvent.CODE_RECOMPILED:
-                list.setListData(new Vector(0));
+        case ViewerModelEvent.CODE_RECOMPILED:
+            list.setListData(new Vector(0));
 
-                break;
-            default:
-        	// Do nothing
-                break;
+            break;
+        default:
+            // Do nothing
+            break;
         }
     }
 }

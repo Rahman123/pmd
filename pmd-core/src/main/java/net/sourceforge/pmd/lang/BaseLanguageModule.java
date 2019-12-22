@@ -1,6 +1,7 @@
 /**
  * BSD-style license; for more info see http://pmd.sourceforge.net/license.html
  */
+
 package net.sourceforge.pmd.lang;
 
 import java.util.ArrayList;
@@ -9,6 +10,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import net.sourceforge.pmd.annotation.Experimental;
 
 /**
  * Created by christoferdutz on 21.09.14.
@@ -23,7 +26,8 @@ public abstract class BaseLanguageModule implements Language {
     protected Map<String, LanguageVersion> versions;
     protected LanguageVersion defaultVersion;
 
-    public BaseLanguageModule(String name, String shortName, String terseName, Class<?> ruleChainVisitorClass, String... extensions) {
+    public BaseLanguageModule(String name, String shortName, String terseName, Class<?> ruleChainVisitorClass,
+            String... extensions) {
         this.name = name;
         this.shortName = shortName;
         this.terseName = terseName;
@@ -31,13 +35,30 @@ public abstract class BaseLanguageModule implements Language {
         this.extensions = Arrays.asList(extensions);
     }
 
+    @Experimental
+    protected void addVersions(LanguageVersionHandler languageVersionHandler, boolean isDefault, String ... languageVersions) {
+        if (versions == null) {
+            versions = new HashMap<>();
+        }
+
+        LanguageVersion languageVersion = new LanguageVersion(this, languageVersions[0], languageVersionHandler);
+
+        for (String version : languageVersions) {
+            versions.put(version, languageVersion);
+        }
+
+        if (isDefault) {
+            defaultVersion = languageVersion;
+        }
+    }
+
     protected void addVersion(String version, LanguageVersionHandler languageVersionHandler, boolean isDefault) {
-        if(versions == null) {
+        if (versions == null) {
             versions = new HashMap<>();
         }
         LanguageVersion languageVersion = new LanguageVersion(this, version, languageVersionHandler);
         versions.put(version, languageVersion);
-        if(isDefault) {
+        if (isDefault) {
             defaultVersion = languageVersion;
         }
     }
@@ -60,7 +81,7 @@ public abstract class BaseLanguageModule implements Language {
     @Override
     public Class<?> getRuleChainVisitorClass() {
         return ruleChainVisitorClass;
-   }
+    }
 
     @Override
     public List<String> getExtensions() {
@@ -82,8 +103,9 @@ public abstract class BaseLanguageModule implements Language {
         return versions != null && versions.containsKey(version);
     }
 
+    @Override
     public LanguageVersion getVersion(String versionName) {
-        if(versions != null) {
+        if (versions != null) {
             return versions.get(versionName);
         }
         return null;
@@ -96,7 +118,7 @@ public abstract class BaseLanguageModule implements Language {
 
     @Override
     public String toString() {
-        return "LanguageModule:" + name + "(" + this.getClass().getSimpleName() + ")";
+        return "LanguageModule:" + name + '(' + this.getClass().getSimpleName() + ')';
     }
 
     @Override
@@ -106,9 +128,13 @@ public abstract class BaseLanguageModule implements Language {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj == null) return false;
-        if (!(obj instanceof BaseLanguageModule)) return false;
-        BaseLanguageModule other = (BaseLanguageModule)obj;
+        if (obj == null) {
+            return false;
+        }
+        if (!(obj instanceof BaseLanguageModule)) {
+            return false;
+        }
+        BaseLanguageModule other = (BaseLanguageModule) obj;
         return name.equals(other.name);
     }
 

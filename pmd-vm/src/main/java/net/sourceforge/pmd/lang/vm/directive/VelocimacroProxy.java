@@ -1,3 +1,4 @@
+
 package net.sourceforge.pmd.lang.vm.directive;
 
 /*
@@ -16,73 +17,70 @@ package net.sourceforge.pmd.lang.vm.directive;
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
- * under the License.    
+ * under the License.
  */
 
 /**
- *  VelocimacroProxy.java
+ * VelocimacroProxy.java
  *
- *   a proxy Directive-derived object to fit with the current directive system
+ * a proxy Directive-derived object to fit with the current directive system
  *
  * @author <a href="mailto:geirm@optonline.net">Geir Magnusson Jr.</a>
  * @version $Id: VelocimacroProxy.java 898032 2010-01-11 19:51:03Z nbubna $
  */
-public class VelocimacroProxy extends Directive
-{
+public class VelocimacroProxy extends Directive {
     private String macroName;
     private int numMacroArgs = 0;
 
     /**
      * Return name of this Velocimacro.
+     *
      * @return The name of this Velocimacro.
      */
-    public String getName()
-    {
-        return  macroName;
+    @Override
+    public String getName() {
+        return macroName;
     }
 
     /**
      * Velocimacros are always LINE type directives.
+     *
      * @return The type of this directive.
      */
-    public int getType()
-    {
+    @Override
+    public int getType() {
         return LINE;
     }
 
     /**
      * sets the directive name of this VM
-     * 
+     *
      * @param name
      */
-    public void setName(String name)
-    {
+    public void setName(String name) {
         macroName = name;
     }
 
     /**
      * sets the array of arguments specified in the macro definition
-     * 
+     *
      * @param arr
      */
-    public void setArgArray(String[] arr)
-    {
+    public void setArgArray(String[] arr) {
         /*
-         * get the arg count from the arg array. remember that the arg array has the macro name as
-         * it's 0th element
+         * get the arg count from the arg array. remember that the arg array has
+         * the macro name as it's 0th element
          */
         numMacroArgs = arr.length - 1;
     }
 
-   /**
+    /**
      * returns the number of ars needed for this VM
-     * 
+     *
      * @return The number of ars needed for this VM
      */
-    public int getNumArgs()
-    {
+    public int getNumArgs() {
         return numMacroArgs;
     }
 
 }
-

@@ -1,3 +1,4 @@
+
 package net.sourceforge.pmd.lang.vm.directive;
 
 /*
@@ -16,53 +17,50 @@ package net.sourceforge.pmd.lang.vm.directive;
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
- * under the License.    
+ * under the License.
  */
 
 /**
- *  Macro implements the macro definition directive of VTL.
+ * Macro implements the macro definition directive of VTL.
  *
- *  example :
+ * example :
  *
- *  #macro( isnull $i )
- *     #if( $i )
- *         $i
- *      #end
- *  #end
+ * #macro( isnull $i ) #if( $i ) $i #end #end
  *
- *  This object is used at parse time to mainly process and register the
- *  macro.  It is used inline in the parser when processing a directive.
+ * This object is used at parse time to mainly process and register the macro.
+ * It is used inline in the parser when processing a directive.
  *
  * @author <a href="mailto:geirm@optonline.net">Geir Magnusson Jr.</a>
  * @author <a href="hps@intermeta.de">Henning P. Schmiedehausen</a>
  * @version $Id: Macro.java 746438 2009-02-21 05:41:24Z nbubna $
  */
-public class Macro extends Directive
-{
+public class Macro extends Directive {
     /**
      * Return name of this directive.
+     *
      * @return The name of this directive.
      */
-    public String getName()
-    {
+    @Override
+    public String getName() {
         return "macro";
     }
 
     /**
      * Return type of this directive.
+     *
      * @return The type of this directive.
      */
-    public int getType()
-    {
+    @Override
+    public int getType() {
         return BLOCK;
     }
 
     /**
-     * Since this class does no processing of content,
-     * there is never a need for an internal scope.
+     * Since this class does no processing of content, there is never a need for
+     * an internal scope.
      */
-    public boolean isScopeProvided()
-    {
+    @Override
+    public boolean isScopeProvided() {
         return false;
     }
 }

@@ -1,26 +1,37 @@
 /**
  * BSD-style license; for more info see http://pmd.sourceforge.net/license.html
  */
+
 package net.sourceforge.pmd.lang.ast;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-
+import java.util.Objects;
+import java.util.logging.Logger;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.jaxen.BaseXPath;
 import org.jaxen.JaxenException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import net.sourceforge.pmd.PMDVersion;
 import net.sourceforge.pmd.lang.ast.xpath.Attribute;
+import net.sourceforge.pmd.lang.ast.xpath.AttributeAxisIterator;
 import net.sourceforge.pmd.lang.ast.xpath.DocumentNavigator;
 import net.sourceforge.pmd.lang.dfa.DataFlowNode;
 
+
+/**
+ * Base class for all implementations of the Node interface.
+ */
 public abstract class AbstractNode implements Node {
+
+    private static final Logger LOG = Logger.getLogger(AbstractNode.class.getName());
 
     protected Node parent;
     protected Node[] children;
@@ -37,170 +48,159 @@ public abstract class AbstractNode implements Node {
     protected GenericToken firstToken;
     protected GenericToken lastToken;
 
-    public AbstractNode(int id) {
-    	this.id = id;
+    public AbstractNode(final int id) {
+        this.id = id;
     }
 
-    public AbstractNode(int id, int theBeginLine, int theEndLine, int theBeginColumn, int theEndColumn) {
-    	this(id);
-    	
-    	beginLine = theBeginLine;
-    	endLine = theEndLine;
-    	beginColumn = theBeginColumn;
-    	endColumn = theEndColumn;
+    public AbstractNode(final int id, final int theBeginLine, final int theEndLine, final int theBeginColumn,
+                        final int theEndColumn) {
+        this(id);
+
+        beginLine = theBeginLine;
+        endLine = theEndLine;
+        beginColumn = theBeginColumn;
+        endColumn = theEndColumn;
     }
-    
+
     public boolean isSingleLine() {
-    	return beginLine == endLine;
+        return beginLine == endLine;
     }
-    
+
     @Override
     public void jjtOpen() {
-	// to be overridden by subclasses
+        // to be overridden by subclasses
     }
 
     @Override
     public void jjtClose() {
-	// to be overridden by subclasses
+        // to be overridden by subclasses
     }
 
     @Override
-    public void jjtSetParent(Node parent) {
-    	this.parent = parent;
+    public void jjtSetParent(final Node parent) {
+        this.parent = parent;
     }
 
     @Override
     public Node jjtGetParent() {
-    	return parent;
+        return parent;
     }
 
     @Override
-    public void jjtAddChild(Node child, int index) {
-		if (children == null) {
-		    children = new Node[index + 1];
-		} else if (index >= children.length) {
-		    Node[] newChildren = new Node[index + 1];
-		    System.arraycopy(children, 0, newChildren, 0, children.length);
-		    children = newChildren;
-		}
-		children[index] = child;
-		child.jjtSetChildIndex(index);
+    public void jjtAddChild(final Node child, final int index) {
+        if (children == null) {
+            children = new Node[index + 1];
+        } else if (index >= children.length) {
+            final Node[] newChildren = new Node[index + 1];
+            System.arraycopy(children, 0, newChildren, 0, children.length);
+            children = newChildren;
+        }
+        children[index] = child;
+        child.jjtSetChildIndex(index);
     }
+
     @Override
-    public void jjtSetChildIndex(int index) {
+    public void jjtSetChildIndex(final int index) {
         childIndex = index;
     }
+
     @Override
     public int jjtGetChildIndex() {
         return childIndex;
     }
 
     @Override
-    public Node jjtGetChild(int index) {
-    	return children[index];
+    public Node jjtGetChild(final int index) {
+        return children[index];
     }
 
     @Override
     public int jjtGetNumChildren() {
-    	return children == null ? 0 : children.length;
+        return children == null ? 0 : children.length;
     }
 
     @Override
     public int jjtGetId() {
-    	return id;
+        return id;
     }
-
-    /**
-     * Subclasses should implement this method to return a name usable with
-     * XPathRule for evaluating Element Names.
-     */
-    @Override
-    public abstract String toString();
 
     @Override
     public String getImage() {
-    	return image;
+        return image;
     }
 
     @Override
-    public void setImage(String image) {
-	this.image = image;
+    public void setImage(final String image) {
+        this.image = image;
     }
 
     @Override
-    public boolean hasImageEqualTo(String image) {
-	return this.getImage() != null && this.getImage().equals(image);
+    public boolean hasImageEqualTo(final String image) {
+        return Objects.equals(this.getImage(), image);
     }
 
     @Override
     public int getBeginLine() {
-	return beginLine;
+        return beginLine;
     }
 
-    public void testingOnly__setBeginLine(int i) {
-	this.beginLine = i;
+    public void testingOnlySetBeginLine(int i) {
+        this.beginLine = i;
     }
 
     @Override
     public int getBeginColumn() {
-	if (beginColumn != -1) {
-	    return beginColumn;
-	} else {
-	    if (children != null && children.length > 0) {
-		return children[0].getBeginColumn();
-	    } else {
-		throw new RuntimeException("Unable to determine beginning line of Node.");
-	    }
-	}
+        if (beginColumn == -1) {
+            if (children != null && children.length > 0) {
+                return children[0].getBeginColumn();
+            } else {
+                throw new RuntimeException("Unable to determine beginning line of Node.");
+            }
+        } else {
+            return beginColumn;
+        }
     }
 
-    public void testingOnly__setBeginColumn(int i) {
-	this.beginColumn = i;
+    public void testingOnlySetBeginColumn(final int i) {
+        this.beginColumn = i;
     }
 
     @Override
     public int getEndLine() {
-	return endLine;
+        return endLine;
     }
 
-    public void testingOnly__setEndLine(int i) {
-	this.endLine = i;
+    public void testingOnlySetEndLine(final int i) {
+        this.endLine = i;
     }
 
     @Override
     public int getEndColumn() {
-	return endColumn;
+        return endColumn;
     }
 
-    public void testingOnly__setEndColumn(int i) {
-	this.endColumn = i;
+    public void testingOnlySetEndColumn(final int i) {
+        this.endColumn = i;
     }
 
     @Override
     public DataFlowNode getDataFlowNode() {
-	if (this.dataFlowNode == null) {
-	    if (this.parent != null) {
-		return parent.getDataFlowNode();
-	    }
-	    return null; //TODO wise?
-	}
-	return dataFlowNode;
+        if (this.dataFlowNode == null) {
+            if (this.parent != null) {
+                return parent.getDataFlowNode();
+            }
+            return null; // TODO wise?
+        }
+        return dataFlowNode;
     }
 
     @Override
-    public void setDataFlowNode(DataFlowNode dataFlowNode) {
-	this.dataFlowNode = dataFlowNode;
+    public void setDataFlowNode(final DataFlowNode dataFlowNode) {
+        this.dataFlowNode = dataFlowNode;
     }
 
-    /**
-     * Returns the n-th parent or null if there are not <code>n</code> ancestors
-     *
-     * @param n how many ancestors to iterate over.
-     * @return the n-th parent or null.
-     * @throws IllegalArgumentException if <code>n</code> is not positive.
-     */
     @Override
-    public Node getNthParent(int n) {
+    public Node getNthParent(final int n) {
         if (n <= 0) {
             throw new IllegalArgumentException();
         }
@@ -214,241 +214,293 @@ public abstract class AbstractNode implements Node {
         return result;
     }
 
-    /**
-     * Traverses up the tree to find the first parent instance of type parentType
-     *
-     * @param parentType class which you want to find.
-     * @return Node of type parentType.  Returns null if none found.
-     */
     @Override
-    public <T> T getFirstParentOfType(Class<T> parentType) {
-	Node parentNode = jjtGetParent();
-	while (parentNode != null && parentNode.getClass() != parentType) {
-	    parentNode = parentNode.jjtGetParent();
-	}
-	return (T) parentNode;
+    public <T> T getFirstParentOfType(final Class<T> parentType) {
+        Node parentNode = jjtGetParent();
+        while (parentNode != null && !parentType.isInstance(parentNode)) {
+            parentNode = parentNode.jjtGetParent();
+        }
+        return parentType.cast(parentNode);
     }
 
-    /**
-     * Traverses up the tree to find all of the parent instances of type parentType
-     *
-     * @param parentType classes which you want to find.
-     * @return List of parentType instances found.
-     */
     @Override
-    public <T> List<T> getParentsOfType(Class<T> parentType) {
-	List<T> parents = new ArrayList<>();
-	Node parentNode = jjtGetParent();
-	while (parentNode != null) {
-	    if (parentNode.getClass() == parentType) {
-		parents.add((T) parentNode);
-	    }
-	    parentNode = parentNode.jjtGetParent();
-	}
-	return parents;
+    public <T> List<T> getParentsOfType(final Class<T> parentType) {
+        final List<T> parents = new ArrayList<>();
+        Node parentNode = jjtGetParent();
+        while (parentNode != null) {
+            if (parentType.isInstance(parentNode)) {
+                parents.add(parentType.cast(parentNode));
+            }
+            parentNode = parentNode.jjtGetParent();
+        }
+        return parents;
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @SafeVarargs
     @Override
-    public <T> List<T> findDescendantsOfType(Class<T> targetType) {
-	List<T> list = new ArrayList<>();
-	findDescendantsOfType(this, targetType, list, true);
-	return list;
+    public final <T> T getFirstParentOfAnyType(final Class<? extends T>... parentTypes) {
+        Node parentNode = jjtGetParent();
+        while (parentNode != null) {
+            for (final Class<? extends T> c : parentTypes) {
+                if (c.isInstance(parentNode)) {
+                    return c.cast(parentNode);
+                }
+            }
+            parentNode = parentNode.jjtGetParent();
+        }
+        return null;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
-    public <T> void findDescendantsOfType(Class<T> targetType, List<T> results, boolean crossBoundaries) {
-	findDescendantsOfType(this, targetType, results, crossBoundaries);
+    public <T> List<T> findDescendantsOfType(final Class<T> targetType) {
+        final List<T> list = new ArrayList<>();
+        findDescendantsOfType(this, targetType, list, false);
+        return list;
     }
 
-    private static <T> void findDescendantsOfType(Node node, Class<T> targetType, List<T> results,
-	    boolean crossFindBoundaries) {
-
-	if (!crossFindBoundaries && node.isFindBoundary()) {
-	    return;
-	}
-
-	int n = node.jjtGetNumChildren();
-	for (int i = 0; i < n; i++) {
-	    Node child = node.jjtGetChild(i);
-	    if (child.getClass() == targetType) {
-		results.add((T) child);
-	    }
-
-	    findDescendantsOfType(child, targetType, results, crossFindBoundaries);
-	}
+    // TODO : Add to Node interface in 7.0.0
+    public <T> List<T> findDescendantsOfType(final Class<T> targetType, final boolean crossBoundaries) {
+        final List<T> list = new ArrayList<>();
+        findDescendantsOfType(this, targetType, list, crossBoundaries);
+        return list;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
-    public <T> List<T> findChildrenOfType(Class<T> targetType) {
-	List<T> list = new ArrayList<>();
-	int n = jjtGetNumChildren();
-	for (int i = 0; i < n; i++) {
-	    Node child = jjtGetChild(i);
-	    if (child.getClass() == targetType) {
-		list.add((T) child);
-	    }
-	}
-	return list;
+    public <T> void findDescendantsOfType(final Class<T> targetType, final List<T> results,
+                                          final boolean crossBoundaries) {
+        findDescendantsOfType(this, targetType, results, crossBoundaries);
+    }
+
+    private static <T> void findDescendantsOfType(final Node node, final Class<T> targetType, final List<T> results,
+                                                  final boolean crossFindBoundaries) {
+
+        for (int i = 0; i < node.jjtGetNumChildren(); i++) {
+            final Node child = node.jjtGetChild(i);
+            if (targetType.isAssignableFrom(child.getClass())) {
+                results.add(targetType.cast(child));
+            }
+
+            if (crossFindBoundaries || !child.isFindBoundary()) {
+                findDescendantsOfType(child, targetType, results, crossFindBoundaries);
+            }
+        }
+    }
+
+    @Override
+    public <T> List<T> findChildrenOfType(final Class<T> targetType) {
+        final List<T> list = new ArrayList<>();
+        for (int i = 0; i < jjtGetNumChildren(); i++) {
+            final Node child = jjtGetChild(i);
+            if (targetType.isInstance(child)) {
+                list.add(targetType.cast(child));
+            }
+        }
+        return list;
     }
 
     @Override
     public boolean isFindBoundary() {
-	return false;
+        return false;
     }
 
     @Override
     public Document getAsDocument() {
-	try {
-	    DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-	    DocumentBuilder db = dbf.newDocumentBuilder();
-	    Document document = db.newDocument();
-	    appendElement(document);
-	    return document;
-	} catch (ParserConfigurationException pce) {
-	    throw new RuntimeException(pce);
-	}
+        try {
+            final DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            final DocumentBuilder db = dbf.newDocumentBuilder();
+            final Document document = db.newDocument();
+            appendElement(document);
+            return document;
+        } catch (final ParserConfigurationException pce) {
+            throw new RuntimeException(pce);
+        }
     }
 
-    protected void appendElement(org.w3c.dom.Node parentNode) {
-	DocumentNavigator docNav = new DocumentNavigator();
-	Document ownerDocument = parentNode.getOwnerDocument();
-	if (ownerDocument == null) {
-	    //If the parentNode is a Document itself, it's ownerDocument is null
-	    ownerDocument = (Document) parentNode;
-	}
-	String elementName = docNav.getElementName(this);
-	Element element = ownerDocument.createElement(elementName);
-	parentNode.appendChild(element);
-	for (Iterator<Attribute> iter = docNav.getAttributeAxisIterator(this); iter.hasNext();) {
-	    Attribute attr = iter.next();
-	    element.setAttribute(attr.getName(), attr.getStringValue());
-	}
-	for (Iterator<Node> iter = docNav.getChildAxisIterator(this); iter.hasNext();) {
-	    AbstractNode child = (AbstractNode) iter.next();
-	    child.appendElement(element);
-	}
+    protected void appendElement(final org.w3c.dom.Node parentNode) {
+        final DocumentNavigator docNav = new DocumentNavigator();
+        Document ownerDocument = parentNode.getOwnerDocument();
+        if (ownerDocument == null) {
+            // If the parentNode is a Document itself, it's ownerDocument is
+            // null
+            ownerDocument = (Document) parentNode;
+        }
+        final String elementName = docNav.getElementName(this);
+        final Element element = ownerDocument.createElement(elementName);
+        parentNode.appendChild(element);
+        for (final Iterator<Attribute> iter = docNav.getAttributeAxisIterator(this); iter.hasNext();) {
+            final Attribute attr = iter.next();
+            element.setAttribute(attr.getName(), attr.getStringValue());
+        }
+        for (final Iterator<Node> iter = docNav.getChildAxisIterator(this); iter.hasNext();) {
+            final AbstractNode child = (AbstractNode) iter.next();
+            child.appendElement(element);
+        }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
-    public <T> T getFirstDescendantOfType(Class<T> descendantType) {
-	return getFirstDescendantOfType(descendantType, this);
+    public <T> T getFirstDescendantOfType(final Class<T> descendantType) {
+        return getFirstDescendantOfType(descendantType, this);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
-    public <T> T getFirstChildOfType(Class<T> childType) {
-	int n = jjtGetNumChildren();
-	for (int i = 0; i < n; i++) {
-	    Node child = jjtGetChild(i);
-	    if (child.getClass() == childType) {
-		return (T) child;
-	    }
-	}
-	return null;
+    public <T> T getFirstChildOfType(final Class<T> childType) {
+        int n = jjtGetNumChildren();
+        for (int i = 0; i < n; i++) {
+            final Node child = jjtGetChild(i);
+            if (childType.isInstance(child)) {
+                return childType.cast(child);
+            }
+        }
+        return null;
     }
 
-    private static <T> T getFirstDescendantOfType(Class<T> descendantType, Node node) {
-	int n = node.jjtGetNumChildren();
-	for (int i = 0; i < n; i++) {
-	    Node n1 = node.jjtGetChild(i);
-	    if (n1.getClass() == descendantType) {
-		return (T) n1;
-	    }
-	    T n2 = getFirstDescendantOfType(descendantType, n1);
-	    if (n2 != null) {
-		return n2;
-	    }
-	}
-	return null;
+    private static <T> T getFirstDescendantOfType(final Class<T> descendantType, final Node node) {
+        final int n = node.jjtGetNumChildren();
+        for (int i = 0; i < n; i++) {
+            final Node n1 = node.jjtGetChild(i);
+            if (descendantType.isAssignableFrom(n1.getClass())) {
+                return descendantType.cast(n1);
+            }
+            if (!n1.isFindBoundary()) {
+                final T n2 = getFirstDescendantOfType(descendantType, n1);
+                if (n2 != null) {
+                    return n2;
+                }
+            }
+        }
+        return null;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
-    public final <T> boolean hasDescendantOfType(Class<T> type) {
-	return getFirstDescendantOfType(type) != null;
+    public final <T> boolean hasDescendantOfType(final Class<T> type) {
+        return getFirstDescendantOfType(type) != null;
     }
 
     /**
-     * 
-     * @param types
-     * @return boolean
+     * Returns true if this node has a descendant of any type among the provided types.
+     *
+     * @param types Types to test
+     * @deprecated Use {@link #hasDescendantOfAnyType(Class[])}
      */
-    public final boolean hasDecendantOfAnyType(Class<?>... types) {
-    	for (Class<?> type : types) {
-    		if (hasDescendantOfType(type)) {
-    		    return true;
-    		}
-    	}
-    	return false;
+    @Deprecated
+    public final boolean hasDecendantOfAnyType(final Class<?>... types) {
+        return hasDescendantOfAnyType(types);
     }
-    
+
     /**
-     * {@inheritDoc}
+     * Returns true if this node has a descendant of any type among the provided types.
+     *
+     * @param types Types to test
      */
+    public final boolean hasDescendantOfAnyType(final Class<?>... types) {
+        // TODO consider implementing that with a single traversal!
+        // hasDescendantOfType could then be a special case of this one
+        // But to really share implementations, getFirstDescendantOfType's
+        // internal helper could have to give up some type safety to rely
+        // instead on a getFirstDescendantOfAnyType, then cast to the correct type
+        for (final Class<?> type : types) {
+            if (hasDescendantOfType(type)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Override
     @SuppressWarnings("unchecked")
-    public List<Node> findChildNodesWithXPath(String xpathString) throws JaxenException {
+    public List<Node> findChildNodesWithXPath(final String xpathString) throws JaxenException {
         return new BaseXPath(xpathString, new DocumentNavigator()).selectNodes(this);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
-    public boolean hasDescendantMatchingXPath(String xpathString) {
+    public boolean hasDescendantMatchingXPath(final String xpathString) {
         try {
             return !findChildNodesWithXPath(xpathString).isEmpty();
-        } catch (JaxenException e) {
+        } catch (final JaxenException e) {
             throw new RuntimeException("XPath expression " + xpathString + " failed: " + e.getLocalizedMessage(), e);
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public Object getUserData() {
         return userData;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
-    public void setUserData(Object userData) {
+    public void setUserData(final Object userData) {
         this.userData = userData;
     }
-    
 
-	public GenericToken jjtGetFirstToken() {
-		return firstToken;
-	}
+    public GenericToken jjtGetFirstToken() {
+        return firstToken;
+    }
 
-	public void jjtSetFirstToken(GenericToken token) {
-		this.firstToken = token;
-	}
+    public void jjtSetFirstToken(final GenericToken token) {
+        this.firstToken = token;
+    }
 
-	public GenericToken jjtGetLastToken() {
-		return lastToken;
-	}
+    public GenericToken jjtGetLastToken() {
+        return lastToken;
+    }
 
-	public void jjtSetLastToken(GenericToken token) {
-		this.lastToken = token;
-	}
+    public void jjtSetLastToken(final GenericToken token) {
+        this.lastToken = token;
+    }
+
+    @Override
+    public void remove() {
+        // Detach current node of its parent, if any
+        final Node parent = jjtGetParent();
+        if (parent != null) {
+            parent.removeChildAtIndex(jjtGetChildIndex());
+            jjtSetParent(null);
+        }
+
+        // TODO [autofix]: Notify action for handling text edition
+    }
+
+    @Override
+    public void removeChildAtIndex(final int childIndex) {
+        if (0 <= childIndex && childIndex < jjtGetNumChildren()) {
+            // Remove the child at the given index
+            children = ArrayUtils.remove(children, childIndex);
+            // Update the remaining & left-shifted children indexes
+            for (int i = childIndex; i < jjtGetNumChildren(); i++) {
+                jjtGetChild(i).jjtSetChildIndex(i);
+            }
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * <p>This default implementation adds compatibility with the previous
+     * way to get the xpath node name, which used {@link Object#toString()}.
+     * <p>
+     * <p>Please override it. It may be removed in a future major version.
+     */
+    @Override
+    // @Deprecated // FUTURE 7.0.0 make abstract
+    public String getXPathNodeName() {
+        LOG.warning("getXPathNodeName should be overriden in classes derived from AbstractNode. "
+                + "The implementation is provided for compatibility with existing implementors,"
+                + "but could be declared abstract as soon as release " + PMDVersion.getNextMajorRelease()
+                + ".");
+        return toString();
+    }
+
+    /**
+     * @deprecated The equivalence between toString and a node's name could be broken as soon as release 7.0.0.
+     * Use getXPathNodeName for that purpose. The use for debugging purposes is not deprecated.
+     */
+    @Deprecated
+    @Override
+    public String toString() {
+        return getXPathNodeName();
+    }
+
+    @Override
+    public Iterator<Attribute> getXPathAttributesIterator() {
+        return new AttributeAxisIterator(this);
+    }
 }

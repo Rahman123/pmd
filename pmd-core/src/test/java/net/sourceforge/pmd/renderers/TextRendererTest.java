@@ -1,9 +1,14 @@
+/**
+ * BSD-style license; for more info see http://pmd.sourceforge.net/license.html
+ */
+
 package net.sourceforge.pmd.renderers;
 
 import net.sourceforge.pmd.PMD;
+import net.sourceforge.pmd.Report.ConfigurationError;
 import net.sourceforge.pmd.Report.ProcessingError;
 
-public class TextRendererTest extends AbstractRendererTst {
+public class TextRendererTest extends AbstractRendererTest {
 
     @Override
     public Renderer getRenderer() {
@@ -12,7 +17,7 @@ public class TextRendererTest extends AbstractRendererTst {
 
     @Override
     public String getExpected() {
-        return "n/a:1:\tblah" + PMD.EOL;
+        return getSourceCodeFilename() + ":1:\tblah" + PMD.EOL;
     }
 
     @Override
@@ -22,15 +27,22 @@ public class TextRendererTest extends AbstractRendererTst {
 
     @Override
     public String getExpectedMultiple() {
-        return "n/a:1:\tblah" + PMD.EOL + "n/a:1:\tblah" + PMD.EOL;
+        return getSourceCodeFilename() + ":1:\tblah" + PMD.EOL
+                + getSourceCodeFilename() + ":1:\tblah" + PMD.EOL;
     }
 
     @Override
     public String getExpectedError(ProcessingError error) {
-        return "file\t-\tError" + PMD.EOL;
+        return "file\t-\tRuntimeException: Error" + PMD.EOL;
     }
 
-    public static junit.framework.Test suite() {
-        return new junit.framework.JUnit4TestAdapter(TextRendererTest.class);
+    @Override
+    public String getExpectedErrorWithoutMessage(ProcessingError error) {
+        return "file\t-\tNullPointerException: null" + PMD.EOL;
+    }
+
+    @Override
+    public String getExpectedError(ConfigurationError error) {
+        return "Foo\t-\ta configuration error" + PMD.EOL;
     }
 }

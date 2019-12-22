@@ -1,8 +1,12 @@
+/**
+ * BSD-style license; for more info see http://pmd.sourceforge.net/license.html
+ */
+
 package net.sourceforge.pmd.renderers;
 
 import net.sourceforge.pmd.PMD;
 
-public class EmacsRendererTest extends AbstractRendererTst {
+public class EmacsRendererTest extends AbstractRendererTest {
 
     @Override
     public Renderer getRenderer() {
@@ -11,7 +15,7 @@ public class EmacsRendererTest extends AbstractRendererTst {
 
     @Override
     public String getExpected() {
-        return "n/a:1: blah" + PMD.EOL;
+        return getSourceCodeFilename() + ":1: blah" + PMD.EOL;
     }
 
     @Override
@@ -21,10 +25,6 @@ public class EmacsRendererTest extends AbstractRendererTst {
 
     @Override
     public String getExpectedMultiple() {
-        return "n/a:1: blah" + PMD.EOL + "n/a:1: blah" + PMD.EOL;
-    }
-
-    public static junit.framework.Test suite() {
-        return new junit.framework.JUnit4TestAdapter(EmacsRendererTest.class);
+        return getSourceCodeFilename() + ":1: blah" + PMD.EOL + getSourceCodeFilename() + ":1: blah" + PMD.EOL;
     }
 }

@@ -1,6 +1,7 @@
 /**
  * BSD-style license; for more info see http://pmd.sourceforge.net/license.html
  */
+
 package net.sourceforge.pmd.lang.dfa;
 
 import java.util.List;
@@ -14,9 +15,9 @@ public interface DataFlowNode {
 
     int getIndex();
 
-    boolean isType(int type);
+    boolean isType(NodeType type);
 
-    void setType(int type);
+    void setType(NodeType type);
 
     List<DataFlowNode> getChildren();
 

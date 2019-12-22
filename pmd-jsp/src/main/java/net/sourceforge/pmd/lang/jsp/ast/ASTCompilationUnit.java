@@ -16,10 +16,10 @@ public class ASTCompilationUnit extends AbstractJspNode implements RootNode {
         super(p, id);
     }
 
-
     /**
      * Accept the visitor. *
      */
+    @Override
     public Object jjtAccept(JspParserVisitor visitor, Object data) {
         return visitor.visit(this, data);
     }

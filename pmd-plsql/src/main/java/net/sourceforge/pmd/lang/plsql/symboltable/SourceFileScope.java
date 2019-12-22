@@ -1,9 +1,12 @@
 /**
  * BSD-style license; for more info see http://pmd.sourceforge.net/license.html
  */
+
 package net.sourceforge.pmd.lang.plsql.symboltable;
 
 import net.sourceforge.pmd.lang.symboltable.AbstractScope;
+import net.sourceforge.pmd.lang.symboltable.Applier;
+import net.sourceforge.pmd.lang.symboltable.ImageFinderFunction;
 import net.sourceforge.pmd.lang.symboltable.NameDeclaration;
 import net.sourceforge.pmd.lang.symboltable.NameOccurrence;
 
@@ -24,8 +27,10 @@ public class SourceFileScope extends AbstractScope {
     }
 
     /**
-     * {@inheritDoc}
-     * @throws IllegalArgumentException if declaration is not a {@link ClassNameDeclaration}
+     *
+     *
+     * @throws IllegalArgumentException
+     *             if declaration is not a {@link ClassNameDeclaration}
      */
     @Override
     public void addDeclaration(NameDeclaration declaration) {
@@ -35,6 +40,7 @@ public class SourceFileScope extends AbstractScope {
         super.addDeclaration(declaration);
     }
 
+    @Override
     public String toString() {
         return "SourceFileScope: " + getDeclarations().keySet();
     }

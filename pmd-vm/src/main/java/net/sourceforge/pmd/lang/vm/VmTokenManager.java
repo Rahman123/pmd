@@ -1,6 +1,7 @@
 /**
  * BSD-style license; for more info see http://pmd.sourceforge.net/license.html
  */
+
 package net.sourceforge.pmd.lang.vm;
 
 import java.io.Reader;
@@ -18,10 +19,12 @@ public class VmTokenManager implements TokenManager {
         vmParserTokenManager = new VmParserTokenManager(new VelocityCharStream(source, 1, 1));
     }
 
+    @Override
     public Object getNextToken() {
         return vmParserTokenManager.getNextToken();
     }
 
+    @Override
     public void setFileName(final String fileName) {
         AbstractTokenManager.setFileName(fileName);
     }

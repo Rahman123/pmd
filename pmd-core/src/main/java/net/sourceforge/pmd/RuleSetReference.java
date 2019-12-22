@@ -1,8 +1,10 @@
 /**
  * BSD-style license; for more info see http://pmd.sourceforge.net/license.html
  */
+
 package net.sourceforge.pmd;
 
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -10,41 +12,35 @@ import java.util.Set;
  * This class represents a reference to RuleSet.
  */
 public class RuleSetReference {
-	private String ruleSetFileName;
-	private boolean allRules;
-	private Set<String> excludes = new LinkedHashSet<>(0);
+    private final String ruleSetFileName;
+    private final boolean allRules;
+    private final Set<String> excludes;
 
-	public RuleSetReference() {	}
-	
-	public RuleSetReference(String theFilename) {
-		ruleSetFileName = theFilename;
-	}
-	
-	public String getRuleSetFileName() {
-		return ruleSetFileName;
-	}
+    public RuleSetReference(final String theFilename, final boolean allRules, final Set<String> excludes) {
+        ruleSetFileName = theFilename;
+        this.allRules = allRules;
+        this.excludes = Collections.unmodifiableSet(new LinkedHashSet<>(excludes));
+    }
 
-	public void setRuleSetFileName(String ruleSetFileName) {
-		this.ruleSetFileName = ruleSetFileName;
-	}
+    public RuleSetReference(final String theFilename, final boolean allRules) {
+        ruleSetFileName = theFilename;
+        this.allRules = allRules;
+        this.excludes = Collections.<String>emptySet();
+    }
 
-	public boolean isAllRules() {
-		return allRules;
-	}
+    public RuleSetReference(final String theFilename) {
+        this(theFilename, false);
+    }
 
-	public void setAllRules(boolean allRules) {
-		this.allRules = allRules;
-	}
+    public String getRuleSetFileName() {
+        return ruleSetFileName;
+    }
 
-	public Set<String> getExcludes() {
-		return excludes;
-	}
+    public boolean isAllRules() {
+        return allRules;
+    }
 
-	public void setExcludes(Set<String> excludes) {
-		this.excludes = excludes;
-	}
-
-	public void addExclude(String name) {
-		this.excludes.add(name);
-	}
+    public Set<String> getExcludes() {
+        return excludes;
+    }
 }

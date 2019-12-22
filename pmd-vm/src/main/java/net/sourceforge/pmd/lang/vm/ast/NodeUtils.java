@@ -1,3 +1,4 @@
+
 package net.sourceforge.pmd.lang.vm.ast;
 
 import org.apache.commons.lang3.text.StrBuilder;
@@ -18,25 +19,27 @@ import org.apache.commons.lang3.text.StrBuilder;
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
- * under the License.    
+ * under the License.
  */
-
 
 /**
  * Utilities for dealing with the AST node structure.
- * 
+ *
  * @author <a href="mailto:jvanzyl@apache.org">Jason van Zyl</a>
  * @author <a href="mailto:geirm@optonline.net">Geir Magnusson Jr.</a>
  * @version $Id: NodeUtils.java 687386 2008-08-20 16:57:07Z nbubna $
  */
-public class NodeUtils {
+public final class NodeUtils {
+    private NodeUtils() { }
 
     /**
-     * Collect all the <SPECIAL_TOKEN>s that are carried along with a token. Special tokens do not participate in
-     * parsing but can still trigger certain lexical actions. In some cases you may want to retrieve these special
-     * tokens, this is simply a way to extract them.
-     * 
-     * @param t the Token
+     * Collect all the <SPECIAL_TOKEN>s that are carried along with a token.
+     * Special tokens do not participate in parsing but can still trigger
+     * certain lexical actions. In some cases you may want to retrieve these
+     * special tokens, this is simply a way to extract them.
+     *
+     * @param t
+     *            the Token
      * @return StrBuilder with the special tokens.
      */
     private static StrBuilder getSpecialText(final Token t) {
@@ -60,7 +63,7 @@ public class NodeUtils {
 
                 /*
                  * more dreaded MORE hack :)
-                 * 
+                 *
                  * looking for ("\\")*"$" sequences
                  */
 
@@ -77,15 +80,13 @@ public class NodeUtils {
                              * if we see a \, keep going
                              */
                             continue;
-                        }
-                        else if (cc == '$') {
+                        } else if (cc == '$') {
                             /*
                              * a $ ends it correctly
                              */
                             term = true;
                             ok = false;
-                        }
-                        else {
+                        } else {
                             /*
                              * nah...
                              */
@@ -108,7 +109,7 @@ public class NodeUtils {
 
     /**
      * complete node literal
-     * 
+     *
      * @param t
      * @return A node literal.
      */
@@ -116,11 +117,9 @@ public class NodeUtils {
         // Look at kind of token and return "" when it's a multiline comment
         if (t.kind == VmParserConstants.MULTI_LINE_COMMENT) {
             return "";
-        }
-        else if (t.specialToken == null || t.specialToken.image.startsWith("##")) {
+        } else if (t.specialToken == null || t.specialToken.image.startsWith("##")) {
             return t.image;
-        }
-        else {
+        } else {
             final StrBuilder special = getSpecialText(t);
             if (special.length() > 0) {
                 return special.append(t.image).toString();
@@ -129,4 +128,4 @@ public class NodeUtils {
         }
     }
 
- }
+}

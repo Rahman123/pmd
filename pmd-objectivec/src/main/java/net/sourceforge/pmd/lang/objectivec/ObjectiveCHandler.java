@@ -1,6 +1,7 @@
 /**
  * BSD-style license; for more info see http://pmd.sourceforge.net/license.html
  */
+
 package net.sourceforge.pmd.lang.objectivec;
 
 import net.sourceforge.pmd.lang.AbstractLanguageVersionHandler;
@@ -10,7 +11,10 @@ import net.sourceforge.pmd.lang.rule.RuleViolationFactory;
 
 /**
  * Implementation of LanguageVersionHandler for the Objective-C Language.
+ *
+ * @deprecated There is no full PMD support for Objective-C.
  */
+@Deprecated
 public class ObjectiveCHandler extends AbstractLanguageVersionHandler {
 
     @Override

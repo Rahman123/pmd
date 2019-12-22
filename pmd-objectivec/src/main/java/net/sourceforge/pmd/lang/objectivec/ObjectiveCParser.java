@@ -1,6 +1,7 @@
 /**
  * BSD-style license; for more info see http://pmd.sourceforge.net/license.html
  */
+
 package net.sourceforge.pmd.lang.objectivec;
 
 import java.io.Reader;
@@ -15,12 +16,17 @@ import net.sourceforge.pmd.lang.ast.ParseException;
 
 /**
  * Adapter for the Objective-C Parser.
+ *
+ * @deprecated There is no full PMD support for Objective-C.
  */
+@Deprecated
 public class ObjectiveCParser extends AbstractParser {
 
     /**
      * Creates a new Objective-C Parser.
-     * @param parserOptions the options
+     * 
+     * @param parserOptions
+     *            the options
      */
     public ObjectiveCParser(ParserOptions parserOptions) {
         super(parserOptions);

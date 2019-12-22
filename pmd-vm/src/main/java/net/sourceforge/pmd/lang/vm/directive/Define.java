@@ -1,3 +1,4 @@
+
 package net.sourceforge.pmd.lang.vm.directive;
 
 /*
@@ -16,25 +17,23 @@ package net.sourceforge.pmd.lang.vm.directive;
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
- * under the License.    
+ * under the License.
  */
 
 /**
- * Directive that puts an unrendered AST block in the context
- * under the specified key, postponing rendering until the
- * reference is used and rendered.
+ * Directive that puts an unrendered AST block in the context under the
+ * specified key, postponing rendering until the reference is used and rendered.
  *
  * @author Andrew Tetlaw
  * @author Nathan Bubna
  * @version $Id: Define.java 686842 2008-08-18 18:29:31Z nbubna $
  */
-public class Define extends Block
-{
+public class Define extends Block {
     /**
      * Return name of this directive.
      */
-    public String getName()
-    {
+    @Override
+    public String getName() {
         return "define";
     }
 

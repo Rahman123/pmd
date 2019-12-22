@@ -1,39 +1,36 @@
 /**
  * BSD-style license; for more info see http://pmd.sourceforge.net/license.html
  */
+
 package net.sourceforge.pmd.lang.java.ast;
 
+import static net.sourceforge.pmd.lang.java.ParserTstUtil.getNodes;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Set;
 
-import net.sourceforge.pmd.lang.java.ParserTst;
-
 import org.junit.Test;
 
-
-public class AccessNodeTest extends ParserTst {
+public class AccessNodeTest {
 
     public static class MyAccessNode extends AbstractJavaAccessNode {
-	public MyAccessNode(int i) {
-	    super(i);
-	}
+        public MyAccessNode(int i) {
+            super(i);
+        }
 
-	public MyAccessNode(JavaParser parser, int i) {
-	    super(parser, i);
-	}
+        public MyAccessNode(JavaParser parser, int i) {
+            super(parser, i);
+        }
     }
 
     @Test
-    public void testModifiersOnClassDecl() throws Throwable {
+    public void testModifiersOnClassDecl() {
         Set<ASTClassOrInterfaceDeclaration> ops = getNodes(ASTClassOrInterfaceDeclaration.class, TEST1);
         assertTrue(ops.iterator().next().isPublic());
     }
 
-    private static final String TEST1 =
-            "public class Foo {}";
-
+    private static final String TEST1 = "public class Foo {}";
 
     @Test
     public void testStatic() {
@@ -135,9 +132,5 @@ public class AccessNodeTest extends ParserTst {
         node = new MyAccessNode(1);
         node.setProtected(true);
         assertFalse("Node set to protected, still package private.", node.isPackagePrivate());
-    }
-
-    public static junit.framework.Test suite() {
-        return new junit.framework.JUnit4TestAdapter(AccessNodeTest.class);
     }
 }

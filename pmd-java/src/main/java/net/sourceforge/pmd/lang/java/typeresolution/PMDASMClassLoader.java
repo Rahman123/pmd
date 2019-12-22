@@ -1,6 +1,7 @@
 /**
  * BSD-style license; for more info see http://pmd.sourceforge.net/license.html
  */
+
 package net.sourceforge.pmd.lang.java.typeresolution;
 
 import java.io.IOException;
@@ -13,6 +14,7 @@ import java.util.concurrent.ConcurrentMap;
 
 import org.objectweb.asm.ClassReader;
 
+import net.sourceforge.pmd.annotation.InternalApi;
 import net.sourceforge.pmd.lang.java.typeresolution.visitors.PMDASMVisitor;
 
 /*
@@ -32,12 +34,16 @@ import net.sourceforge.pmd.lang.java.typeresolution.visitors.PMDASMVisitor;
  * Note: since git show 46ad3a4700b7a233a177fa77d08110127a85604c the cache is using
  * a concurrent hash map to avoid synchronizing on the class loader instance.
  */
+@InternalApi
+@Deprecated
 public final class PMDASMClassLoader extends ClassLoader {
 
     private static PMDASMClassLoader cachedPMDASMClassLoader;
     private static ClassLoader cachedClassLoader;
 
-    /** Caches the names of the classes that we can't load or that don't exist. */
+    /**
+     * Caches the names of the classes that we can't load or that don't exist.
+     */
     private final ConcurrentMap<String, Boolean> dontBother = new ConcurrentHashMap<>();
 
     static {
@@ -64,8 +70,9 @@ public final class PMDASMClassLoader extends ClassLoader {
 
     @Override
     public Class<?> loadClass(String name) throws ClassNotFoundException {
-        if(dontBother.containsKey(name))
+        if (dontBother.containsKey(name)) {
             throw new ClassNotFoundException(name);
+        }
 
         try {
             return super.loadClass(name);
@@ -81,8 +88,22 @@ public final class PMDASMClassLoader extends ClassLoader {
         }
     }
 
+    /**
+     * Checks if the class loader could resolve a given class name (ie: it
+     * doesn't know for sure it will fail). Notice, that the ability to resolve
+     * a class does not imply that the class will actually be found and
+     * resolved.
+     * 
+     * @param name
+     *            the name of the class
+     * @return whether the class can be resolved
+     */
+    public boolean couldResolve(String name) {
+        return !dontBother.containsKey(name);
+    }
+
     public synchronized Map<String, String> getImportedClasses(String name) throws ClassNotFoundException {
-        if (dontBother.containsValue(name)) {
+        if (dontBother.containsKey(name)) {
             throw new ClassNotFoundException(name);
         }
         try (InputStream classResource = getResourceAsStream(name.replace('.', '/') + ".class")) {
@@ -92,10 +113,10 @@ public final class PMDASMClassLoader extends ClassLoader {
 
             List<String> inner = asmVisitor.getInnerClasses();
             if (inner != null && !inner.isEmpty()) {
-                inner = new ArrayList<>(inner); // to avoid
-                                                      // ConcurrentModificationException
+                // to avoid ConcurrentModificationException
+                inner = new ArrayList<>(inner);
                 for (String str : inner) {
-                    try (InputStream innerClassStream = getResourceAsStream(str.replace('.', '/') + ".class")){
+                    try (InputStream innerClassStream = getResourceAsStream(str.replace('.', '/') + ".class")) {
                         if (innerClassStream != null) {
                             reader = new ClassReader(innerClassStream);
                             reader.accept(asmVisitor, 0);

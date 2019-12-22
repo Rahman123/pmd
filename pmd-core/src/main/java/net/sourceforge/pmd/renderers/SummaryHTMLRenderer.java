@@ -1,6 +1,7 @@
 /**
  * BSD-style license; for more info see http://pmd.sourceforge.net/license.html
  */
+
 package net.sourceforge.pmd.renderers;
 
 import java.io.IOException;
@@ -25,13 +26,11 @@ public class SummaryHTMLRenderer extends AbstractAccumulatingRenderer {
         definePropertyDescriptor(HTMLRenderer.LINE_PREFIX);
     }
 
+    @Override
     public String defaultFileExtension() {
         return "html";
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void end() throws IOException {
         writer.write("<html><head><title>PMD</title></head><body>" + PMD.EOL);
@@ -43,6 +42,7 @@ public class SummaryHTMLRenderer extends AbstractAccumulatingRenderer {
         htmlRenderer.setProperty(HTMLRenderer.LINK_PREFIX, getProperty(HTMLRenderer.LINK_PREFIX));
         htmlRenderer.setProperty(HTMLRenderer.LINE_PREFIX, getProperty(HTMLRenderer.LINE_PREFIX));
         htmlRenderer.setShowSuppressedViolations(showSuppressedViolations);
+        htmlRenderer.setUseShortNames(inputPathPrefixes);
         htmlRenderer.renderBody(writer, report);
 
         writer.write("</tr></table></body></html>" + PMD.EOL);

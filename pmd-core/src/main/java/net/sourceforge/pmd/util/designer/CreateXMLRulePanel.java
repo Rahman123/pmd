@@ -1,13 +1,13 @@
 /**
  * BSD-style license; for more info see http://pmd.sourceforge.net/license.html
  */
+
 package net.sourceforge.pmd.util.designer;
 
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -15,29 +15,31 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
+import org.apache.commons.lang3.StringUtils;
+
 import net.sourceforge.pmd.PMD;
-import net.sourceforge.pmd.util.StringUtil;
 
 /**
- * This class is responsible for creating the
- * contentpanel for the Create Rule XML Frame.
+ * This class is responsible for creating the contentpanel for the Create Rule
+ * XML Frame.
  */
-public class CreateXMLRulePanel extends JPanel implements ActionListener{
+@Deprecated // to be removed with PMD 7.0.0
+public class CreateXMLRulePanel extends JPanel implements ActionListener {
 
     private JTextField rulenameField = new JTextField(30);
     private JTextField rulemsgField = new JTextField(30);
-    private JTextArea ruledescField = new JTextArea(5,30);
+    private JTextArea ruledescField = new JTextArea(5, 30);
     private JTextArea ruleXMLArea = new JTextArea(30, 30);
     private JTextArea xpathQueryArea = new JTextArea();
     private CodeEditorTextPane codeEditorPane = new CodeEditorTextPane();
-    
-    public CreateXMLRulePanel(JTextArea xpathQueryArea, CodeEditorTextPane codeEditorPane){
-    	super();
-    	this.xpathQueryArea = xpathQueryArea;
-    	this.codeEditorPane = codeEditorPane;
-    	GridBagConstraints gbc = new GridBagConstraints();
-    	// We use a gridbaglayout for a nice and sturdy look and feel
-    	GridBagLayout gbl = new GridBagLayout();
+
+    public CreateXMLRulePanel(JTextArea xpathQueryArea, CodeEditorTextPane codeEditorPane) {
+        super();
+        this.xpathQueryArea = xpathQueryArea;
+        this.codeEditorPane = codeEditorPane;
+        GridBagConstraints gbc = new GridBagConstraints();
+        // We use a gridbaglayout for a nice and sturdy look and feel
+        GridBagLayout gbl = new GridBagLayout();
         setLayout(gbl);
 
         gbc.gridx = 0;
@@ -72,13 +74,13 @@ public class CreateXMLRulePanel extends JPanel implements ActionListener{
         gbc.anchor = GridBagConstraints.EAST;
         gbc.weightx = 0.5;
         JLabel ruledescLabel = new JLabel("Rule desc : ");
-        gbl.setConstraints(ruledescLabel,gbc);
+        gbl.setConstraints(ruledescLabel, gbc);
         add(ruledescLabel);
         gbc.gridx = 1;
         gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 0.5;
         ruledescField.setLineWrap(true);
-        gbl.setConstraints(ruledescField,gbc);
+        gbl.setConstraints(ruledescField, gbc);
         add(ruledescField);
 
         gbc.gridx = 0;
@@ -108,16 +110,15 @@ public class CreateXMLRulePanel extends JPanel implements ActionListener{
     }
 
     /**
-     * We let our class implement the ActionListener interface
-     * and use it to generate the xml code when the user presses
-     * the "Create rule XML" button.
+     * We let our class implement the ActionListener interface and use it to
+     * generate the xml code when the user presses the "Create rule XML" button.
      *
      */
     @Override
     public void actionPerformed(ActionEvent exception) {
-    	
-    	boolean hasXPathQuery = StringUtil.isNotEmpty(xpathQueryArea.getText());
-    	
+
+        boolean hasXPathQuery = StringUtils.isNotBlank(xpathQueryArea.getText());
+
         StringBuilder buffer = new StringBuilder(200);
         appendLn(buffer, "<rule  name=\"" + rulenameField.getText() + '\"');
         appendLn(buffer, "  message=\"" + rulemsgField.getText() + '\"');
@@ -126,15 +127,15 @@ public class CreateXMLRulePanel extends JPanel implements ActionListener{
         appendLn(buffer, "  " + ruledescField.getText());
         appendLn(buffer, "  </description>");
         if (hasXPathQuery) {
-        	appendLn(buffer, "  <properties>");
-        	appendLn(buffer, "    <property name=\"xpath\">");
-        	appendLn(buffer, "    <value>");
-        	appendLn(buffer, "<![CDATA[");
-        	appendLn(buffer, xpathQueryArea.getText());
-        	appendLn(buffer, "]]>");
-        	appendLn(buffer, "    </value>");
-        	appendLn(buffer, "    </property>");
-        	appendLn(buffer, "  </properties>");
+            appendLn(buffer, "  <properties>");
+            appendLn(buffer, "    <property name=\"xpath\">");
+            appendLn(buffer, "    <value>");
+            appendLn(buffer, "<![CDATA[");
+            appendLn(buffer, xpathQueryArea.getText());
+            appendLn(buffer, "]]>");
+            appendLn(buffer, "    </value>");
+            appendLn(buffer, "    </property>");
+            appendLn(buffer, "  </properties>");
         }
         appendLn(buffer, "  <priority>3</priority>");
         appendLn(buffer, "  <example>");

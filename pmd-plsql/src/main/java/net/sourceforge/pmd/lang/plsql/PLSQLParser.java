@@ -1,11 +1,16 @@
 /**
  * BSD-style license; for more info see http://pmd.sourceforge.net/license.html
  */
+
 package net.sourceforge.pmd.lang.plsql;
 
+import java.io.IOException;
 import java.io.Reader;
+import java.io.StringReader;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.apache.commons.io.IOUtils;
 
 import net.sourceforge.pmd.lang.AbstractParser;
 import net.sourceforge.pmd.lang.ParserOptions;
@@ -34,19 +39,26 @@ public class PLSQLParser extends AbstractParser {
     protected net.sourceforge.pmd.lang.plsql.ast.PLSQLParser createPLSQLParser(Reader source) throws ParseException {
         Reader in = IOUtil.skipBOM(source);
         // Wrapped PLSQL AST Parser
-        net.sourceforge.pmd.lang.plsql.ast.PLSQLParser parser = new net.sourceforge.pmd.lang.plsql.ast.PLSQLParser(in);
-        return parser;
+        return new net.sourceforge.pmd.lang.plsql.ast.PLSQLParser(in);
     }
 
+    @Override
     public boolean canParse() {
         return true;
     }
 
+    @Override
     public Node parse(String fileName, Reader source) throws ParseException {
-        AbstractTokenManager.setFileName(fileName);
-        return createPLSQLParser(source).Input();
+        try {
+            String sourcecode = IOUtils.toString(source);
+            AbstractTokenManager.setFileName(fileName);
+            return createPLSQLParser(new StringReader(sourcecode)).Input(sourcecode);
+        } catch (IOException e) {
+            throw new ParseException(e);
+        }
     }
 
+    @Override
     public Map<Integer, String> getSuppressMap() {
         return new HashMap<>(); // FIXME
     }

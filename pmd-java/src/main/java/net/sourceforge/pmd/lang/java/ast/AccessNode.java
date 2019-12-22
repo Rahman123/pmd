@@ -1,80 +1,134 @@
 /**
  * BSD-style license; for more info see http://pmd.sourceforge.net/license.html
  */
+
 package net.sourceforge.pmd.lang.java.ast;
 
+import net.sourceforge.pmd.annotation.InternalApi;
 import net.sourceforge.pmd.lang.ast.Node;
 
-// FUTURE Remove non JavaBean setters
 /**
  * This interface captures Java access modifiers.
  */
 public interface AccessNode extends Node {
 
-	int PUBLIC = 0x0001;
-	int PROTECTED = 0x0002;
-	int PRIVATE = 0x0004;
-	int ABSTRACT = 0x0008;
-	int STATIC = 0x0010;
-	int FINAL = 0x0020;
-	int SYNCHRONIZED = 0x0040;
-	int NATIVE = 0x0080;
-	int TRANSIENT = 0x0100;
-	int VOLATILE = 0x0200;
-	int STRICTFP = 0x1000;
-	int DEFAULT = 0x2000;
+    int PUBLIC = 0x0001;
+    int PROTECTED = 0x0002;
+    int PRIVATE = 0x0004;
+    int ABSTRACT = 0x0008;
+    int STATIC = 0x0010;
+    int FINAL = 0x0020;
+    int SYNCHRONIZED = 0x0040;
+    int NATIVE = 0x0080;
+    int TRANSIENT = 0x0100;
+    int VOLATILE = 0x0200;
+    int STRICTFP = 0x1000;
+    int DEFAULT = 0x2000;
 
-	int getModifiers();
 
-	void setModifiers(int modifiers);
+    int getModifiers();
 
-	boolean isPublic();
 
-	void setPublic(boolean isPublic);
+    @Deprecated
+    @InternalApi
+    void setModifiers(int modifiers);
 
-	boolean isProtected();
 
-	void setProtected(boolean isProtected);
+    boolean isPublic();
 
-	boolean isPrivate();
 
-	void setPrivate(boolean isPrivate);
+    @Deprecated
+    @InternalApi
+    void setPublic(boolean isPublic);
 
-	boolean isAbstract();
 
-	void setAbstract(boolean isAbstract);
+    boolean isProtected();
 
-	boolean isStatic();
 
-	void setStatic(boolean isStatic);
+    @Deprecated
+    @InternalApi
+    void setProtected(boolean isProtected);
 
-	boolean isFinal();
 
-	void setFinal(boolean isFinal);
+    boolean isPrivate();
 
-	boolean isSynchronized();
 
-	void setSynchronized(boolean isSynchronized);
+    @Deprecated
+    @InternalApi
+    void setPrivate(boolean isPrivate);
 
-	boolean isNative();
 
-	void setNative(boolean isNative);
+    boolean isAbstract();
 
-	boolean isTransient();
 
-	void setTransient(boolean isTransient);
+    @Deprecated
+    @InternalApi
+    void setAbstract(boolean isAbstract);
 
-	boolean isVolatile();
 
-	void setVolatile(boolean isVolatile);
+    boolean isStatic();
 
-	boolean isStrictfp();
 
-	void setStrictfp(boolean isStrictfp);
+    @Deprecated
+    @InternalApi
+    void setStatic(boolean isStatic);
 
-	boolean isPackagePrivate();
 
-	void setDefault(boolean isDefault);
+    boolean isFinal();
 
-	boolean isDefault();
+
+    @Deprecated
+    @InternalApi
+    void setFinal(boolean isFinal);
+
+
+    boolean isSynchronized();
+
+
+    @Deprecated
+    @InternalApi
+    void setSynchronized(boolean isSynchronized);
+
+
+    boolean isNative();
+
+
+    @Deprecated
+    @InternalApi
+    void setNative(boolean isNative);
+
+
+    boolean isTransient();
+
+
+    @Deprecated
+    @InternalApi
+    void setTransient(boolean isTransient);
+
+
+    boolean isVolatile();
+
+
+    @Deprecated
+    @InternalApi
+    void setVolatile(boolean isVolatile);
+
+
+    boolean isStrictfp();
+
+
+    @Deprecated
+    @InternalApi
+    void setStrictfp(boolean isStrictfp);
+
+
+    boolean isPackagePrivate();
+
+
+    @Deprecated
+    @InternalApi
+    void setDefault(boolean isDefault);
+
+
+    boolean isDefault();
 }

@@ -2,17 +2,13 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <artifactId>pmd-groovy</artifactId>
-    <name>PMD Grooovy</name>
+    <name>PMD Groovy</name>
 
     <parent>
         <groupId>net.sourceforge.pmd</groupId>
         <artifactId>pmd</artifactId>
-        <version>5.5.2-SNAPSHOT</version>
+        <version>6.21.0-SNAPSHOT</version>
     </parent>
-
-    <properties>
-        <config.basedir>${basedir}/../pmd-core</config.basedir>
-    </properties>
 
     <build>
         <plugins>
@@ -32,6 +28,10 @@
         <dependency>
             <groupId>org.codehaus.groovy</groupId>
             <artifactId>groovy</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
         </dependency>
 
         <dependency>

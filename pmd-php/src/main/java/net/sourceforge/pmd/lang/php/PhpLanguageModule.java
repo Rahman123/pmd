@@ -1,13 +1,17 @@
 /**
  * BSD-style license; for more info see http://pmd.sourceforge.net/license.html
  */
+
 package net.sourceforge.pmd.lang.php;
 
 import net.sourceforge.pmd.lang.BaseLanguageModule;
 
 /**
  * Language Module for PHP.
+ *
+ * @deprecated There is no full PMD support for PHP.
  */
+@Deprecated
 public class PhpLanguageModule extends BaseLanguageModule {
 
     /** The name. */

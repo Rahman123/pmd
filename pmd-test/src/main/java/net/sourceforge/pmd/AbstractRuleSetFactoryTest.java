@@ -1,7 +1,9 @@
 /**
  * BSD-style license; for more info see http://pmd.sourceforge.net/license.html
  */
+
 package net.sourceforge.pmd;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -15,20 +17,20 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.StringTokenizer;
-
+import java.util.regex.Pattern;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
-import net.sourceforge.pmd.lang.Language;
-import net.sourceforge.pmd.lang.LanguageRegistry;
-import net.sourceforge.pmd.lang.rule.RuleReference;
-import net.sourceforge.pmd.lang.rule.XPathRule;
-import net.sourceforge.pmd.util.ResourceLoader;
-
+import org.apache.commons.io.FilenameUtils;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.xml.sax.InputSource;
@@ -36,48 +38,58 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
 
+import net.sourceforge.pmd.lang.Language;
+import net.sourceforge.pmd.lang.LanguageRegistry;
+import net.sourceforge.pmd.lang.rule.RuleReference;
+import net.sourceforge.pmd.lang.rule.XPathRule;
+import net.sourceforge.pmd.properties.PropertyDescriptor;
+import net.sourceforge.pmd.util.ResourceLoader;
+
 /**
- * Base test class to verify the language's rulesets.
- * This class should be subclassed for each language.
+ * Base test class to verify the language's rulesets. This class should be
+ * subclassed for each language.
  */
 public abstract class AbstractRuleSetFactoryTest {
     private static SAXParserFactory saxParserFactory;
-    private static ValidateDefaultHandler validateDefaultHandlerXsd;
-    private static ValidateDefaultHandler validateDefaultHandlerDtd;
+    private static ValidateDefaultHandler validateDefaultHandler;
     private static SAXParser saxParser;
+
+    protected Set<String> validXPathClassNames = new HashSet<>();
+
+    public AbstractRuleSetFactoryTest() {
+        validXPathClassNames.add(XPathRule.class.getName());
+    }
 
     /**
      * Setups the XML parser with validation.
-     * @throws Exception any error
+     * 
+     * @throws Exception
+     *             any error
      */
     @BeforeClass
     public static void init() throws Exception {
         saxParserFactory = SAXParserFactory.newInstance();
         saxParserFactory.setValidating(true);
         saxParserFactory.setNamespaceAware(true);
-        
+
         // Hope we're using Xerces, or this may not work!
         // Note: Features are listed here
         // http://xerces.apache.org/xerces2-j/features.html
-        saxParserFactory.setFeature("http://xml.org/sax/features/validation",
-                true);
-        saxParserFactory.setFeature(
-                "http://apache.org/xml/features/validation/schema", true);
-        saxParserFactory
-                .setFeature(
-                        "http://apache.org/xml/features/validation/schema-full-checking",
-                        true);
-        
-        validateDefaultHandlerXsd = new ValidateDefaultHandler("ruleset_2_0_0.xsd");
-        validateDefaultHandlerDtd = new ValidateDefaultHandler("ruleset_2_0_0.dtd");
-        
+        saxParserFactory.setFeature("http://xml.org/sax/features/validation", true);
+        saxParserFactory.setFeature("http://apache.org/xml/features/validation/schema", true);
+        saxParserFactory.setFeature("http://apache.org/xml/features/validation/schema-full-checking", true);
+
+        validateDefaultHandler = new ValidateDefaultHandler();
+
         saxParser = saxParserFactory.newSAXParser();
     }
 
     /**
-     * Checks all rulesets of all languages on the classpath and verifies that all required attributes
-     * for all rules are specified.
-     * @throws Exception any error
+     * Checks all rulesets of all languages on the classpath and verifies that
+     * all required attributes for all rules are specified.
+     * 
+     * @throws Exception
+     *             any error
      */
     @Test
     public void testAllPMDBuiltInRulesMeetConventions() throws Exception {
@@ -115,8 +127,11 @@ public abstract class AbstractRuleSetFactoryTest {
                     messages += "Rule " + fileName + "/" + rule.getName() + " is missing 'externalInfoURL' attribute"
                             + PMD.EOL;
                 } else {
-                    String expectedExternalInfoURL = "https?://pmd.(sourceforge.net|github.io)/.+/rules/"
-                            + fileName.replaceAll("rulesets/", "").replaceAll(".xml", "") + ".html#" + rule.getName();
+                    String expectedExternalInfoURL = "https?://pmd.(sourceforge.net|github.io)/.+/pmd_rules_"
+                            + language.getTerseName() + "_"
+                            + FilenameUtils.getBaseName(fileName)
+                            + ".html#"
+                            + rule.getName().toLowerCase(Locale.ROOT);
                     if (rule.getExternalInfoUrl() == null
                             || !rule.getExternalInfoUrl().matches(expectedExternalInfoURL)) {
                         invalidExternalInfoURL++;
@@ -129,7 +144,7 @@ public abstract class AbstractRuleSetFactoryTest {
                 String expectedClassName = "net.sourceforge.pmd.lang." + language.getTerseName() + ".rule." + group
                         + "." + rule.getName() + "Rule";
                 if (!rule.getRuleClass().equals(expectedClassName)
-                        && !rule.getRuleClass().equals(XPathRule.class.getName())) {
+                        && !validXPathClassNames.contains(rule.getRuleClass())) {
                     invalidClassName++;
                     messages += "Rule " + fileName + "/" + rule.getName() + " seems to have an invalid 'class' value ("
                             + rule.getRuleClass() + "), it should be:" + expectedClassName + PMD.EOL;
@@ -152,8 +167,8 @@ public abstract class AbstractRuleSetFactoryTest {
         }
         // We do this at the end to ensure we test ALL the rules before failing
         // the test
-        if (invalidSinceAttributes > 0 || invalidExternalInfoURL > 0 || invalidClassName > 0
-                || invalidRegexSuppress > 0 || invalidXPathSuppress > 0) {
+        if (invalidSinceAttributes > 0 || invalidExternalInfoURL > 0 || invalidClassName > 0 || invalidRegexSuppress > 0
+                || invalidXPathSuppress > 0) {
             fail("All built-in PMD rules need 'since' attribute (" + invalidSinceAttributes
                     + " are missing), a proper ExternalURLInfo (" + invalidExternalInfoURL
                     + " are invalid), a class name meeting conventions (" + invalidClassName + " are invalid), no '"
@@ -165,7 +180,9 @@ public abstract class AbstractRuleSetFactoryTest {
 
     /**
      * Verifies that all rulesets are valid XML according to the xsd schema.
-     * @throws Exception any error
+     * 
+     * @throws Exception
+     *             any error
      */
     @Test
     public void testXmlSchema() throws Exception {
@@ -180,7 +197,9 @@ public abstract class AbstractRuleSetFactoryTest {
 
     /**
      * Verifies that all rulesets are valid XML according to the DTD.
-     * @throws Exception any error
+     * 
+     * @throws Exception
+     *             any error
      */
     @Test
     public void testDtd() throws Exception {
@@ -194,9 +213,11 @@ public abstract class AbstractRuleSetFactoryTest {
     }
 
     /**
-     * Reads and writes the rulesets to make sure, that no data is lost if the rulests are
-     * processed.
-     * @throws Exception any error
+     * Reads and writes the rulesets to make sure, that no data is lost if the
+     * rulests are processed.
+     * 
+     * @throws Exception
+     *             any error
      */
     @Test
     public void testReadWriteRoundTrip() throws Exception {
@@ -205,6 +226,7 @@ public abstract class AbstractRuleSetFactoryTest {
         for (String fileName : ruleSetFileNames) {
             testRuleSet(fileName);
         }
+
     }
 
     // Gets all test PMD Ruleset XML files
@@ -222,7 +244,9 @@ public abstract class AbstractRuleSetFactoryTest {
         List<String> ruleSetFileNames = new ArrayList<>();
         try {
             Properties properties = new Properties();
-            properties.load(ResourceLoader.loadResourceAsStream("rulesets/" + language + "/rulesets.properties"));
+            try (InputStream is = new ResourceLoader().loadClassPathResourceAsStreamOrThrow("rulesets/" + language + "/rulesets.properties")) {
+                properties.load(is);
+            }
             String fileNames = properties.getProperty("rulesets.filenames");
             StringTokenizer st = new StringTokenizer(fileNames, ",");
             while (st.hasMoreTokens()) {
@@ -241,85 +265,83 @@ public abstract class AbstractRuleSetFactoryTest {
         return rsf.createRuleSet(ruleSetFileName);
     }
 
-    private boolean validateAgainstSchema(String fileName) throws IOException, RuleSetNotFoundException,
-            ParserConfigurationException, SAXException {
-        InputStream inputStream = loadResourceAsStream(fileName);
-        boolean valid = validateAgainstSchema(inputStream);
-        if (!valid) {
-            System.err.println("Validation against XML Schema failed for: " + fileName);
+    private boolean validateAgainstSchema(String fileName)
+            throws IOException, RuleSetNotFoundException, ParserConfigurationException, SAXException {
+        try (InputStream inputStream = loadResourceAsStream(fileName)) {
+            boolean valid = validateAgainstSchema(inputStream);
+            if (!valid) {
+                System.err.println("Validation against XML Schema failed for: " + fileName);
+            }
+            return valid;
         }
-        return valid;
     }
 
-    private boolean validateAgainstSchema(InputStream inputStream) throws IOException, RuleSetNotFoundException,
-            ParserConfigurationException, SAXException {
+    private boolean validateAgainstSchema(InputStream inputStream)
+            throws IOException, RuleSetNotFoundException, ParserConfigurationException, SAXException {
 
-        saxParser.parse(inputStream, validateDefaultHandlerXsd.resetValid());
+        saxParser.parse(inputStream, validateDefaultHandler.resetValid());
         inputStream.close();
-        return validateDefaultHandlerXsd.isValid();
+        return validateDefaultHandler.isValid();
     }
 
-    private boolean validateAgainstDtd(String fileName) throws IOException, RuleSetNotFoundException,
-            ParserConfigurationException, SAXException {
-        InputStream inputStream = loadResourceAsStream(fileName);
-        boolean valid = validateAgainstDtd(inputStream);
-        if (!valid) {
-            System.err.println("Validation against DTD failed for: " + fileName);
+    private boolean validateAgainstDtd(String fileName)
+            throws IOException, RuleSetNotFoundException, ParserConfigurationException, SAXException {
+        try (InputStream inputStream = loadResourceAsStream(fileName)) {
+            boolean valid = validateAgainstDtd(inputStream);
+            if (!valid) {
+                System.err.println("Validation against DTD failed for: " + fileName);
+            }
+            return valid;
         }
-        return valid;
     }
 
-    private boolean validateAgainstDtd(InputStream inputStream) throws IOException, RuleSetNotFoundException,
-            ParserConfigurationException, SAXException {
+    private boolean validateAgainstDtd(InputStream inputStream)
+            throws IOException, RuleSetNotFoundException, ParserConfigurationException, SAXException {
 
         // Read file into memory
         String file = readFullyToString(inputStream);
         inputStream.close();
 
+        String rulesetNamespace = RuleSetWriter.RULESET_2_0_0_NS_URI;
+
         // Remove XML Schema stuff, replace with DTD
         file = file.replaceAll("<\\?xml [ a-zA-Z0-9=\".-]*\\?>", "");
-        file = file.replaceAll("xmlns=\"" + RuleSetWriter.RULESET_NS_URI + "\"", "");
+        file = file.replaceAll("xmlns=\"" + rulesetNamespace + "\"", "");
         file = file.replaceAll("xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"", "");
-        file = file.replaceAll("xsi:schemaLocation=\"" + RuleSetWriter.RULESET_NS_URI
-                + " http://pmd.sourceforge.net/ruleset_2_0_0.xsd\"", "");
+        file = file.replaceAll("xsi:schemaLocation=\"" + rulesetNamespace
+                + " https://pmd.sourceforge.io/ruleset_\\d_0_0.xsd\"", "");
 
-        file = "<?xml version=\"1.0\"?>" + PMD.EOL + "<!DOCTYPE ruleset SYSTEM \"file://"
-                + "/path/does/not/matter/will/be/replaced/ruleset_2_0_0.dtd\">" + PMD.EOL + file;
+        if (rulesetNamespace.equals(RuleSetWriter.RULESET_2_0_0_NS_URI)) {
+            file = "<?xml version=\"1.0\"?>" + PMD.EOL + "<!DOCTYPE ruleset SYSTEM "
+                    + "\"https://pmd.sourceforge.io/ruleset_2_0_0.dtd\">" + PMD.EOL + file;
+        } else {
+            file = "<?xml version=\"1.0\"?>" + PMD.EOL + "<!DOCTYPE ruleset>" + PMD.EOL + file;
+        }
 
-        InputStream modifiedStream = new ByteArrayInputStream(file.getBytes());
-
-        saxParser.parse(modifiedStream, validateDefaultHandlerDtd.resetValid());
-        modifiedStream.close();
-        return validateDefaultHandlerDtd.isValid();
+        try (InputStream modifiedStream = new ByteArrayInputStream(file.getBytes())) {
+            saxParser.parse(modifiedStream, validateDefaultHandler.resetValid());
+        }
+        return validateDefaultHandler.isValid();
     }
 
     private String readFullyToString(InputStream inputStream) throws IOException {
         StringBuilder buf = new StringBuilder(64 * 1024);
-        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-        String line;
-        while ((line = reader.readLine()) != null) {
-            buf.append(line);
-            buf.append(PMD.EOL);
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                buf.append(line);
+                buf.append(PMD.EOL);
+            }
+            return buf.toString();
         }
-        reader.close();
-        return buf.toString();
     }
 
     private static InputStream loadResourceAsStream(String resource) throws RuleSetNotFoundException {
-        InputStream inputStream = ResourceLoader.loadResourceAsStream(resource,
-                AbstractRuleSetFactoryTest.class.getClassLoader());
-        if (inputStream == null) {
-            throw new RuleSetNotFoundException(
-                    "Can't find resource "
-                            + resource
-                            + "  Make sure the resource is a valid file or URL or is on the CLASSPATH.  Here's the current classpath: "
-                            + System.getProperty("java.class.path"));
-        }
-        return inputStream;
+        return new ResourceLoader().loadClassPathResourceAsStreamOrThrow(resource);
     }
 
-    private void testRuleSet(String fileName) throws IOException, RuleSetNotFoundException,
-            ParserConfigurationException, SAXException {
+    private void testRuleSet(String fileName)
+            throws IOException, RuleSetNotFoundException, ParserConfigurationException, SAXException {
 
         // Load original XML
         // String xml1 =
@@ -367,119 +389,96 @@ public abstract class AbstractRuleSetFactoryTest {
         // All 3 versions of the RuleSet should be the same
         assertEqualsRuleSet("Original RuleSet and 1st roundtrip Ruleset not the same (filename: " + fileName + ")",
                 ruleSet1, ruleSet2);
-        assertEqualsRuleSet(
-                "1st roundtrip Ruleset and 2nd roundtrip RuleSet not the same (filename: " + fileName + ")", ruleSet2,
-                ruleSet3);
+        assertEqualsRuleSet("1st roundtrip Ruleset and 2nd roundtrip RuleSet not the same (filename: " + fileName + ")",
+                ruleSet2, ruleSet3);
 
         // It's hard to compare the XML DOMs. At least the roundtrip ones should
         // textually be the same.
-        assertEquals("1st roundtrip RuleSet XML and 2nd roundtrip RuleSet XML (filename: " + fileName + ")", xml2, xml3);
+        assertEquals("1st roundtrip RuleSet XML and 2nd roundtrip RuleSet XML (filename: " + fileName + ")", xml2,
+                xml3);
     }
 
-    private void assertEqualsRuleSet(String message, RuleSet ruleSet1,
-            RuleSet ruleSet2) {
-        assertEquals(message + ", RuleSet name", ruleSet1.getName(), ruleSet2
-                .getName());
-        assertEquals(message + ", RuleSet description", ruleSet1
-                .getDescription(), ruleSet2.getDescription());
-        assertEquals(message + ", RuleSet exclude patterns", ruleSet1
-                .getExcludePatterns(), ruleSet2.getExcludePatterns());
-        assertEquals(message + ", RuleSet include patterns", ruleSet1
-                .getIncludePatterns(), ruleSet2.getIncludePatterns());
-        assertEquals(message + ", RuleSet rule count", ruleSet1.getRules()
-                .size(), ruleSet2.getRules().size());
+    private void assertEqualsRuleSet(String message, RuleSet ruleSet1, RuleSet ruleSet2) {
+        assertEquals(message + ", RuleSet name", ruleSet1.getName(), ruleSet2.getName());
+        assertEquals(message + ", RuleSet description", ruleSet1.getDescription(), ruleSet2.getDescription());
+        assertEquals(message + ", RuleSet exclude patterns", ruleSet1.getExcludePatterns(),
+                ruleSet2.getExcludePatterns());
+        assertEquals(message + ", RuleSet include patterns", ruleSet1.getIncludePatterns(),
+                ruleSet2.getIncludePatterns());
+        assertEquals(message + ", RuleSet rule count", ruleSet1.getRules().size(), ruleSet2.getRules().size());
 
         for (int i = 0; i < ruleSet1.getRules().size(); i++) {
             Rule rule1 = ((List<Rule>) ruleSet1.getRules()).get(i);
             Rule rule2 = ((List<Rule>) ruleSet2.getRules()).get(i);
 
             assertFalse(message + ", Different RuleReference",
-                    rule1 instanceof RuleReference
-                            && !(rule2 instanceof RuleReference)
-                            || !(rule1 instanceof RuleReference)
-                            && rule2 instanceof RuleReference);
+                        rule1 instanceof RuleReference != rule2 instanceof RuleReference);
 
             if (rule1 instanceof RuleReference) {
                 RuleReference ruleReference1 = (RuleReference) rule1;
                 RuleReference ruleReference2 = (RuleReference) rule2;
-                assertEquals(message + ", RuleReference overridden language",
-                        ruleReference1.getOverriddenLanguage(), ruleReference2
-                                .getOverriddenLanguage());
-                assertEquals(
-                        message
-                                + ", RuleReference overridden minimum language version",
+                assertEquals(message + ", RuleReference overridden language", ruleReference1.getOverriddenLanguage(),
+                        ruleReference2.getOverriddenLanguage());
+                assertEquals(message + ", RuleReference overridden minimum language version",
                         ruleReference1.getOverriddenMinimumLanguageVersion(),
                         ruleReference2.getOverriddenMinimumLanguageVersion());
-                assertEquals(
-                        message
-                                + ", RuleReference overridden maximum language version",
+                assertEquals(message + ", RuleReference overridden maximum language version",
                         ruleReference1.getOverriddenMaximumLanguageVersion(),
                         ruleReference2.getOverriddenMaximumLanguageVersion());
-                assertEquals(message + ", RuleReference overridden deprecated",
-                        ruleReference1.isOverriddenDeprecated(), ruleReference2
-                                .isOverriddenDeprecated());
-                assertEquals(message + ", RuleReference overridden name",
-                        ruleReference1.getOverriddenName(), ruleReference2
-                                .getOverriddenName());
-                assertEquals(
-                        message + ", RuleReference overridden description",
-                        ruleReference1.getOverriddenDescription(),
-                        ruleReference2.getOverriddenDescription());
-                assertEquals(message + ", RuleReference overridden message",
-                        ruleReference1.getOverriddenMessage(), ruleReference2
-                                .getOverriddenMessage());
-                assertEquals(message
-                        + ", RuleReference overridden external info url",
-                        ruleReference1.getOverriddenExternalInfoUrl(),
-                        ruleReference2.getOverriddenExternalInfoUrl());
-                assertEquals(message + ", RuleReference overridden priority",
-                        ruleReference1.getOverriddenPriority(), ruleReference2
-                                .getOverriddenPriority());
-                assertEquals(message + ", RuleReference overridden examples",
-                        ruleReference1.getOverriddenExamples(), ruleReference2
-                                .getOverriddenExamples());
+                assertEquals(message + ", RuleReference overridden deprecated", ruleReference1.isOverriddenDeprecated(),
+                        ruleReference2.isOverriddenDeprecated());
+                assertEquals(message + ", RuleReference overridden name", ruleReference1.getOverriddenName(),
+                        ruleReference2.getOverriddenName());
+                assertEquals(message + ", RuleReference overridden description",
+                        ruleReference1.getOverriddenDescription(), ruleReference2.getOverriddenDescription());
+                assertEquals(message + ", RuleReference overridden message", ruleReference1.getOverriddenMessage(),
+                        ruleReference2.getOverriddenMessage());
+                assertEquals(message + ", RuleReference overridden external info url",
+                        ruleReference1.getOverriddenExternalInfoUrl(), ruleReference2.getOverriddenExternalInfoUrl());
+                assertEquals(message + ", RuleReference overridden priority", ruleReference1.getOverriddenPriority(),
+                        ruleReference2.getOverriddenPriority());
+                assertEquals(message + ", RuleReference overridden examples", ruleReference1.getOverriddenExamples(),
+                        ruleReference2.getOverriddenExamples());
             }
 
-            assertEquals(message + ", Rule name", rule1.getName(), rule2
-                    .getName());
-            assertEquals(message + ", Rule class", rule1.getRuleClass(), rule2
-                    .getRuleClass());
-            assertEquals(message + ", Rule description " + rule1.getName(),
-                    rule1.getDescription(), rule2.getDescription());
-            assertEquals(message + ", Rule message", rule1.getMessage(), rule2
-                    .getMessage());
-            assertEquals(message + ", Rule external info url", rule1
-                    .getExternalInfoUrl(), rule2.getExternalInfoUrl());
-            assertEquals(message + ", Rule priority", rule1.getPriority(),
-                    rule2.getPriority());
-            assertEquals(message + ", Rule examples", rule1.getExamples(),
-                    rule2.getExamples());
+            assertEquals(message + ", Rule name", rule1.getName(), rule2.getName());
+            assertEquals(message + ", Rule class", rule1.getRuleClass(), rule2.getRuleClass());
+            assertEquals(message + ", Rule description " + rule1.getName(), rule1.getDescription(),
+                    rule2.getDescription());
+            assertEquals(message + ", Rule message", rule1.getMessage(), rule2.getMessage());
+            assertEquals(message + ", Rule external info url", rule1.getExternalInfoUrl(), rule2.getExternalInfoUrl());
+            assertEquals(message + ", Rule priority", rule1.getPriority(), rule2.getPriority());
+            assertEquals(message + ", Rule examples", rule1.getExamples(), rule2.getExamples());
 
-            List<PropertyDescriptor<?>> propertyDescriptors1 = rule1
-                    .getPropertyDescriptors();
-            List<PropertyDescriptor<?>> propertyDescriptors2 = rule2
-                    .getPropertyDescriptors();
-            assertEquals(message + ", Rule property descriptor ",
-                    propertyDescriptors1, propertyDescriptors2);
+            List<PropertyDescriptor<?>> propertyDescriptors1 = rule1.getPropertyDescriptors();
+            List<PropertyDescriptor<?>> propertyDescriptors2 = rule2.getPropertyDescriptors();
+            assertEquals(message + ", Rule property descriptor ", propertyDescriptors1, propertyDescriptors2);
             for (int j = 0; j < propertyDescriptors1.size(); j++) {
-                assertEquals(message + ", Rule property value " + j, rule1
-                        .getProperty(propertyDescriptors1.get(j)), rule2
-                        .getProperty(propertyDescriptors2.get(j)));
+                Object value1 = rule1.getProperty(propertyDescriptors1.get(j));
+                Object value2 = rule2.getProperty(propertyDescriptors2.get(j));
+                // special case for Pattern, there is no equals method
+                if (propertyDescriptors1.get(j).type() == Pattern.class) {
+                    value1 = ((Pattern) value1).pattern();
+                    value2 = ((Pattern) value2).pattern();
+                }
+                assertEquals(message + ", Rule property value " + j, value1, value2);
             }
-            assertEquals(message + ", Rule property descriptor count",
-                    propertyDescriptors1.size(), propertyDescriptors2.size());
+            assertEquals(message + ", Rule property descriptor count", propertyDescriptors1.size(),
+                    propertyDescriptors2.size());
         }
     }
 
     /**
      * Create a {@link RuleSetReferenceId} by the given XML string.
-     * @param ruleSetXml the ruleset file content as string
+     * 
+     * @param ruleSetXml
+     *            the ruleset file content as string
      * @return the {@link RuleSetReferenceId}
      */
     protected static RuleSetReferenceId createRuleSetReferenceId(final String ruleSetXml) {
         return new RuleSetReferenceId(null) {
             @Override
-            public InputStream getInputStream(ClassLoader classLoader) throws RuleSetNotFoundException {
+            public InputStream getInputStream(ResourceLoader resourceLoader) throws RuleSetNotFoundException {
                 try {
                     return new ByteArrayInputStream(ruleSetXml.getBytes("UTF-8"));
                 } catch (UnsupportedEncodingException e) {
@@ -493,13 +492,15 @@ public abstract class AbstractRuleSetFactoryTest {
      * Validator for the SAX parser
      */
     private static class ValidateDefaultHandler extends DefaultHandler {
-        private final String validateDocument;
         private boolean valid = true;
+        private final Map<String, String> schemaMapping;
 
-        public ValidateDefaultHandler(String validateDocument) {
-            this.validateDocument = validateDocument;
+        ValidateDefaultHandler() {
+            schemaMapping = new HashMap<>();
+            schemaMapping.put("https://pmd.sourceforge.io/ruleset_2_0_0.xsd", "ruleset_2_0_0.xsd");
+            schemaMapping.put("https://pmd.sourceforge.io/ruleset_2_0_0.dtd", "ruleset_2_0_0.dtd");
         }
-        
+
         public ValidateDefaultHandler resetValid() {
             valid = true;
             return this;
@@ -531,12 +532,12 @@ public abstract class AbstractRuleSetFactoryTest {
         }
 
         @Override
-        public InputSource resolveEntity(String publicId, String systemId)
-                throws IOException, SAXException {
-            if ("http://pmd.sourceforge.net/ruleset_2_0_0.xsd".equals(systemId)
-                    || systemId.endsWith("ruleset_2_0_0.dtd")) {
+        public InputSource resolveEntity(String publicId, String systemId) throws IOException, SAXException {
+            String resource = schemaMapping.get(systemId);
+
+            if (resource != null) {
                 try {
-                    InputStream inputStream = loadResourceAsStream(validateDocument);
+                    InputStream inputStream = loadResourceAsStream(resource);
                     return new InputSource(inputStream);
                 } catch (RuleSetNotFoundException e) {
                     System.err.println(e.getMessage());
@@ -544,8 +545,7 @@ public abstract class AbstractRuleSetFactoryTest {
                 }
             }
             throw new IllegalArgumentException(
-                    "No clue how to handle: publicId=" + publicId
-                            + ", systemId=" + systemId);
+                    "No clue how to handle: publicId=" + publicId + ", systemId=" + systemId);
         }
     }
 

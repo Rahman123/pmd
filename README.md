@@ -1,58 +1,31 @@
 # PMD
 
+[![Join the chat at https://gitter.im/pmd/pmd](https://badges.gitter.im/pmd/pmd.svg)](https://gitter.im/pmd/pmd?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Build Status](https://travis-ci.org/pmd/pmd.svg?branch=master)](https://travis-ci.org/pmd/pmd)
-
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/net.sourceforge.pmd/pmd/badge.svg)](https://maven-badges.herokuapp.com/maven-central/net.sourceforge.pmd/pmd)
+[![Coverage Status](https://coveralls.io/repos/github/pmd/pmd/badge.svg)](https://coveralls.io/github/pmd/pmd)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/a674ee8642ed44c6ba7633626ee95967)](https://www.codacy.com/app/pmd/pmd?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=pmd/pmd&amp;utm_campaign=Badge_Grade)
 ## About
 
-PMD is a source code analyzer. It finds common programming flaws like unused variables, empty catch blocks,
-unnecessary object creation, and so forth. It supports Java, JavaScript, Salesforce.com Apex, XML, XSL.
-Additionally it includes CPD, the copy-paste-detector. CPD finds duplicated code in
-Java, C, C++, C#, PHP, Ruby, Fortran, JavaScript, Salesforce.com Apex, Perl, Swift.
+**PMD** is a source code analyzer. It finds common programming flaws like unused variables, empty catch blocks,
+unnecessary object creation, and so forth. It supports Java, JavaScript, Salesforce.com Apex and Visualforce,
+Modelica, PLSQL, Apache Velocity, XML, XSL, Scala.
 
-## Source
+Additionally it includes **CPD**, the copy-paste-detector. CPD finds duplicated code in
+C/C++, C#, Dart, Fortran, Go, Groovy, Java, JavaScript, JSP, Kotlin, Lua, Matlab, Modelica,
+Objective-C, Perl, PHP, PLSQL, Python, Ruby, Salesforce.com Apex, Scala, Swift and Visualforce.
 
-Our latest source of PMD can be found on [GitHub]. Fork us!
+## Source and Documentation
 
-### How to build PMD?
+Our latest source of PMD can be found on [GitHub](https://github.com/pmd/pmd). Fork us!
 
-You'll need to have a `~/.m2/toolchains.xml` file setup with jdk 1.6 (for pmd 5.3.x), jdk 1.7 (for pmd 5.4.x and pmd 5.5.x)
-and jdk 1.8 (for some features in pmd 5.5.x). See [maven toolchains](https://maven.apache.org/guides/mini/guide-using-toolchains.html).
-A example file can be found here: [example-toolchains.xml](https://github.com/pmd/pmd/blob/master/example-toolchains.xml).
+*   [How to build PMD](BUILDING.md)
+*   [How to contribute to PMD](CONTRIBUTING.md)
 
-Use maven in the top-level directory:
-
-    mvn clean package
-
-This will create the zip files in the directory `pmd-dist/target`:
-
-    cd pmd-dist/target
-    ls *.zip
-
-That's all !
-
-### How to build the documentation (maven site)?
-
-Building the maven site is done with the following commands:
-
-    mvn clean install -DskipTests=true
-    mvn install site site:stage -Psite
-
-You'll find the built site in the directory `target/staging/`.
-
-### Bug Reports
-
-We are using Sourceforge for bug tracking. Please file your bugs at <https://sourceforge.net/p/pmd/bugs/>.
-
-### Pull Requests
-
-Pull requests are always welcome: <https://github.com/pmd/pmd/pulls>
-
+The rule designer is developed over at [pmd/pmd-designer](https://github.com/pmd/pmd-designer).
+Please see [its README](https://github.com/pmd/pmd-designer#contributing) for
+developer documentation.
 
 ## News and Website
 
-More information can be found on our [Website] and on [SourceForge].
-
-
-[GitHub]: https://github.com/pmd/pmd
-[Website]: https://pmd.github.io
-[SourceForge]: https://sourceforge.net/projects/pmd/
+More information can be found on our [Website](https://pmd.github.io) and on [SourceForge](https://sourceforge.net/projects/pmd/).

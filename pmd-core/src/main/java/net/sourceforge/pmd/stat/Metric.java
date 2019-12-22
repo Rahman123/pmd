@@ -1,13 +1,19 @@
 /**
  * BSD-style license; for more info see http://pmd.sourceforge.net/license.html
  */
+
 package net.sourceforge.pmd.stat;
+
+import net.sourceforge.pmd.lang.rule.stat.StatisticalRule;
+
 
 /**
  * This class holds all sorts of statistical information.
  *
  * @author David Dixon-Peugh
+ * @deprecated see {@link StatisticalRule}
  */
+@Deprecated
 public class Metric {
     private String metricName = null;
     private int count = 0;
@@ -19,13 +25,21 @@ public class Metric {
 
     /**
      * Creates a new metric with the given information.
-     * @param name the metric's name
-     * @param count count of occurrences
-     * @param total the total value of the metric
-     * @param low the lowest value of the metric
-     * @param high the highest value of the metric
-     * @param mean the mean value
-     * @param stddev the standard deviation
+     *
+     * @param name
+     *            the metric's name
+     * @param count
+     *            count of occurrences
+     * @param total
+     *            the total value of the metric
+     * @param low
+     *            the lowest value of the metric
+     * @param high
+     *            the highest value of the metric
+     * @param mean
+     *            the mean value
+     * @param stddev
+     *            the standard deviation
      */
     public Metric(String name, int count, double total, double low, double high, double mean, double stddev) {
         this.metricName = name;

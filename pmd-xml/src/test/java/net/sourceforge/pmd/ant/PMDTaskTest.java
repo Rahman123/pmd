@@ -1,6 +1,7 @@
 /**
  * BSD-style license; for more info see http://pmd.sourceforge.net/license.html
  */
+
 package net.sourceforge.pmd.ant;
 
 import org.junit.Test;
@@ -14,6 +15,6 @@ public class PMDTaskTest extends AbstractAntTestHelper {
     @Test
     public void testXML() {
         executeTarget("testXML");
-        assertOutputContaining("Potentialy mistyped CDATA section with extra [ at beginning or ] at the end.");
+        assertOutputContaining("Potentially mistyped CDATA section with extra [ at beginning or ] at the end.");
     }
 }

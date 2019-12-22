@@ -1,6 +1,7 @@
 /**
  * BSD-style license; for more info see http://pmd.sourceforge.net/license.html
  */
+
 package net.sourceforge.pmd.lang.ecmascript;
 
 import java.io.Reader;
@@ -21,7 +22,8 @@ public class Ecmascript3Parser extends AbstractParser {
 
     public Ecmascript3Parser(ParserOptions parserOptions) {
         super(parserOptions);
-        ecmascriptParser = new net.sourceforge.pmd.lang.ecmascript.ast.EcmascriptParser((EcmascriptParserOptions)parserOptions);
+        ecmascriptParser = new net.sourceforge.pmd.lang.ecmascript.ast.EcmascriptParser(
+                (EcmascriptParserOptions) parserOptions);
     }
 
     @Override
@@ -29,14 +31,17 @@ public class Ecmascript3Parser extends AbstractParser {
         return new Ecmascript5TokenManager(source);
     }
 
+    @Override
     public boolean canParse() {
         return true;
     }
 
+    @Override
     public Node parse(String fileName, Reader source) throws ParseException {
         return ecmascriptParser.parse(source);
     }
 
+    @Override
     public Map<Integer, String> getSuppressMap() {
         return ecmascriptParser.getSuppressMap();
     }

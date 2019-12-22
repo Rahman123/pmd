@@ -3,21 +3,20 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>pmd-test</artifactId>
     <name>PMD Test Framework</name>
+    <description>Contains a test framework to test rules.</description>
 
     <parent>
         <groupId>net.sourceforge.pmd</groupId>
         <artifactId>pmd</artifactId>
-        <version>5.5.2-SNAPSHOT</version>
+        <version>6.21.0-SNAPSHOT</version>
     </parent>
-
-    <properties>
-        <config.basedir>${basedir}/../pmd-core</config.basedir>
-    </properties>
 
     <dependencies>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
+            <!-- overrides the default scope from inherited dependency management. -->
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>net.sourceforge.pmd</groupId>
@@ -25,7 +24,15 @@
         </dependency>
         <dependency>
             <groupId>org.apache.ant</groupId>
+            <artifactId>ant</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.ant</groupId>
             <artifactId>ant-testutil</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
         </dependency>
 
         <dependency>

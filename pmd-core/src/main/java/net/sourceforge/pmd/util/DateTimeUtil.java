@@ -1,28 +1,34 @@
 /**
  * BSD-style license; for more info see http://pmd.sourceforge.net/license.html
  */
+
 package net.sourceforge.pmd.util;
 
+import net.sourceforge.pmd.annotation.InternalApi;
+
 /**
- * 
+ *
  * @author Brian Remedios
  */
+@InternalApi
+@Deprecated
 public final class DateTimeUtil {
 
-	private DateTimeUtil() {}
-	
-	/**
-	 * 
-	 * @param milliseconds
-	 * @return String
-	 */
-	public static String asHoursMinutesSeconds(long milliseconds) {
-		
-		if (milliseconds < 0) {
-		    throw new IllegalArgumentException();
-		}
-		
-		long seconds = 0;
+    private DateTimeUtil() {
+    }
+
+    /**
+     *
+     * @param milliseconds
+     * @return String
+     */
+    public static String asHoursMinutesSeconds(long milliseconds) {
+
+        if (milliseconds < 0) {
+            throw new IllegalArgumentException();
+        }
+
+        long seconds = 0;
         long minutes = 0;
         long hours = 0;
 
@@ -49,5 +55,5 @@ public final class DateTimeUtil {
         }
         res.append(seconds).append('s');
         return res.toString();
-	}
+    }
 }

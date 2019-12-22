@@ -1,24 +1,27 @@
 /**
  * BSD-style license; for more info see http://pmd.sourceforge.net/license.html
  */
+
 package net.sourceforge.pmd.util.designer;
 
 import javax.swing.JTextPane;
 
 import net.sourceforge.pmd.lang.ast.Node;
 
+@Deprecated // to be removed with PMD 7.0.0
 public class CodeEditorTextPane extends JTextPane implements LineGetter {
-    
+
     private String[] getLines() {
-	// Support files with line separators from various platforms
+        // Support files with line separators from various platforms
         return getText().split("\r\n|\r|\n");
     }
 
+    @Override
     public String getLine(int number) {
-	String[] lines= getLines();
-	if (number < lines.length) {
-	    return lines[number];
-	}
+        String[] lines = getLines();
+        if (number < lines.length) {
+            return lines[number];
+        }
         throw new RuntimeException("Line number " + number + " not found");
     }
 
@@ -47,9 +50,9 @@ public class CodeEditorTextPane extends JTextPane implements LineGetter {
     public void select(Node node) {
         String[] lines = getLines();
         if (node.getBeginLine() >= 0) {
-	    setSelectionStart(getPosition(lines, node.getBeginLine(), node.getBeginColumn()));
-	    setSelectionEnd(getPosition(lines, node.getEndLine(), node.getEndColumn()) + 1);
-	}
+            setSelectionStart(getPosition(lines, node.getBeginLine(), node.getBeginColumn()));
+            setSelectionEnd(getPosition(lines, node.getEndLine(), node.getEndColumn()) + 1);
+        }
         requestFocus();
     }
 }

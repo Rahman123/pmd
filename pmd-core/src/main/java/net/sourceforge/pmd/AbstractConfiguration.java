@@ -1,16 +1,19 @@
 /**
  * BSD-style license; for more info see http://pmd.sourceforge.net/license.html
  */
+
 package net.sourceforge.pmd;
+
+import java.nio.charset.Charset;
 
 /**
  * Base configuration class for both PMD and CPD.
- * 
+ *
  * @author Brian Remedios
  */
 public abstract class AbstractConfiguration {
 
-    private String sourceEncoding = System.getProperty("file.encoding");
+    private Charset sourceEncoding = Charset.forName(System.getProperty("file.encoding"));
     private boolean debug;
 
     /**
@@ -22,26 +25,27 @@ public abstract class AbstractConfiguration {
 
     /**
      * Get the character encoding of source files.
-     * 
+     *
      * @return The character encoding.
      */
-    public String getSourceEncoding() {
+    public Charset getSourceEncoding() {
         return sourceEncoding;
     }
 
     /**
      * Set the character encoding of source files.
-     * 
-     * @param sourceEncoding The character encoding.
+     *
+     * @param sourceEncoding
+     *            The character encoding.
      */
     public void setSourceEncoding(String sourceEncoding) {
-        this.sourceEncoding = sourceEncoding;
+        this.sourceEncoding = Charset.forName(sourceEncoding);
     }
 
     /**
      * Return the debug indicator. If this value is <code>true</code> then PMD
      * will log debug information.
-     * 
+     *
      * @return <code>true</code> if debug logging is enabled, <code>false</code>
      *         otherwise.
      */
@@ -51,8 +55,9 @@ public abstract class AbstractConfiguration {
 
     /**
      * Set the debug indicator.
-     * 
-     * @param debug The debug indicator to set.
+     *
+     * @param debug
+     *            The debug indicator to set.
      * @see #isDebug()
      */
     public void setDebug(boolean debug) {

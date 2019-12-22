@@ -1,6 +1,7 @@
 /**
  * BSD-style license; for more info see http://pmd.sourceforge.net/license.html
  */
+
 package net.sourceforge.pmd.lang.java.dfa;
 
 import net.sourceforge.pmd.lang.DataFlowHandler;
@@ -10,9 +11,10 @@ import net.sourceforge.pmd.lang.java.ast.ASTMethodDeclaration;
 import net.sourceforge.pmd.lang.java.ast.JavaParserVisitorAdapter;
 
 /**
+ * TODO What about initializers? This only processes methods and
+ * constructors.
+ *
  * @author raik
- *         <p/>
- *         TODO What about initializers?  This only processes methods and constructors
  */
 public class DataFlowFacade extends JavaParserVisitorAdapter {
 
@@ -25,12 +27,14 @@ public class DataFlowFacade extends JavaParserVisitorAdapter {
         node.jjtAccept(this, null);
     }
 
+    @Override
     public Object visit(ASTMethodDeclaration node, Object data) {
         sbf.buildDataFlowFor(node);
         vav.compute(node);
         return data;
     }
 
+    @Override
     public Object visit(ASTConstructorDeclaration node, Object data) {
         sbf.buildDataFlowFor(node);
         vav.compute(node);

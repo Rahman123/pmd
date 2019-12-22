@@ -1,12 +1,11 @@
 /**
  * BSD-style license; for more info see http://pmd.sourceforge.net/license.html
  */
+
 package net.sourceforge.pmd.cpd;
 
-import org.sonar.plugins.scala.cpd.ScalaTokenizer;
-
 /**
- * Language implementation for Scala
+ * Language implementation for Scala.
  */
 public class ScalaLanguage extends AbstractLanguage {
 

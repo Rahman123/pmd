@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<test-data>
+<test-data
+    xmlns="http://pmd.sourceforge.net/rule-tests"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://pmd.sourceforge.net/rule-tests http://pmd.sourceforge.net/rule-tests_1_0_0.xsd">
     <test-code>
         <description><![CDATA[
 should be utility class since all static, public constructor
@@ -232,6 +235,197 @@ public class AccountFragment extends Fragment {
     return inflater.inflate(R.layout.mylayout, container, false);
   }
 
+}
+        ]]></code>
+    </test-code>
+
+    <test-code>
+        <description><![CDATA[
+Lombok NoArgsConstructor - ok
+     ]]></description>
+        <expected-problems>0</expected-problems>
+        <code><![CDATA[
+import lombok.NoArgsConstructor;
+import lombok.AccessLevel;
+
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+public class Foo {
+ public static Foo get() {
+  return null;
+ }
+}
+     ]]></code>
+    </test-code>
+
+    <test-code>
+        <description><![CDATA[
+Lombok NoArgsConstructor static import- ok
+     ]]></description>
+        <expected-problems>0</expected-problems>
+        <code><![CDATA[
+import static lombok.AccessLevel.PRIVATE;
+
+import lombok.NoArgsConstructor;
+
+@NoArgsConstructor(access = PRIVATE)
+public class Foo {
+ public static Foo get() {
+  return null;
+ }
+}
+     ]]></code>
+    </test-code>
+
+    <test-code>
+        <description><![CDATA[
+Lombok NoArgsConstructor no import- ok
+     ]]></description>
+        <expected-problems>0</expected-problems>
+        <code><![CDATA[
+import lombok.NoArgsConstructor;
+
+@NoArgsConstructor(access = lombok.AccessLevel.PRIVATE)
+public class Foo {
+ public static Foo get() {
+  return null;
+ }
+}
+     ]]></code>
+    </test-code>
+
+    <test-code>
+        <description><![CDATA[
+Lombok NoArgsConstructor with no access level- should be a utility class
+     ]]></description>
+        <expected-problems>1</expected-problems>
+        <code><![CDATA[
+import lombok.NoArgsConstructor;
+
+@NoArgsConstructor
+public class Foo {
+ public static Foo get() {
+  return null;
+ }
+}
+     ]]></code>
+    </test-code>
+
+    <test-code>
+        <description><![CDATA[
+Lombok NoArgsConstructor with wrong access level - should be a utility class
+     ]]></description>
+        <expected-problems>1</expected-problems>
+        <code><![CDATA[
+import lombok.NoArgsConstructor;
+
+@NoArgsConstructor(access = lombok.AccessLevel.PUBLIC)
+public class Foo {
+ public static Foo get() {
+  return null;
+ }
+}
+     ]]></code>
+    </test-code>
+
+    <test-code>
+        <description><![CDATA[
+Lombok AllArgsConstructor - ok
+     ]]></description>
+        <expected-problems>1</expected-problems>
+        <code><![CDATA[
+import lombok.AllArgsConstructor;
+import lombok.AccessLevel;
+
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+public class Foo {
+ public static Foo get() {
+  return null;
+ }
+}
+     ]]></code>
+    </test-code>
+
+	<test-code>
+        <description><![CDATA[
+#824 False Positive when extending another class
+     ]]></description>
+        <expected-problems>0</expected-problems>
+        <code><![CDATA[
+import java.util.ArrayList;
+
+public class FooLocal extends ThreadLocal<Integer> {
+ public static FooLocal get() {
+  return new FooLocal();
+ }
+}
+     ]]></code>
+    </test-code>
+
+    <test-code>
+        <description>#1094 [java] UseUtilityClass should be LombokAware</description>
+        <expected-problems>0</expected-problems>
+        <code><![CDATA[
+import lombok.experimental.UtilityClass;
+
+@UtilityClass
+public class MyUtil {
+    private final static int CONSTANT = 5;
+
+    public static int addSomething(int in) {
+        return in + CONSTANT;
+    }
+}
+        ]]></code>
+    </test-code>
+
+    <test-code>
+        <description>Inner class in abstract class false-negative</description>
+        <expected-problems>1</expected-problems>
+        <code><![CDATA[
+public abstract class Outer {
+    private static class Inner {
+        public static int getInt() { return 42; }
+    }
+}
+        ]]></code>
+    </test-code>
+
+    <test-code>
+        <description>Inner class in abstract class false-negative</description>
+        <expected-problems>1</expected-problems>
+        <code><![CDATA[
+public abstract class Outer {
+    private static class Inner {
+        private static int answer;
+        public static int getInt() { return answer; }
+    }
+}
+        ]]></code>
+    </test-code>
+
+
+    <test-code>
+        <description>Inner class in interface false-negative</description>
+        <expected-problems>1</expected-problems>
+        <code><![CDATA[
+public interface Outer {
+    private static class Inner {
+        public static int getInt() { return 42; }
+    }
+}
+        ]]></code>
+    </test-code>
+
+    <test-code>
+        <description>Inner class in sub-class false-negative</description>
+        <expected-problems>1</expected-problems>
+        <code><![CDATA[
+public class Outer extends Object {
+    private static class Inner {
+        public static boolean isYes(int a) {
+            return a != 0;
+        }
+    }
 }
         ]]></code>
     </test-code>

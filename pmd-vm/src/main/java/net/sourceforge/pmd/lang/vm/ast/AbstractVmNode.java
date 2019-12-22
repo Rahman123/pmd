@@ -1,3 +1,4 @@
+
 package net.sourceforge.pmd.lang.vm.ast;
 
 /*
@@ -16,15 +17,15 @@ package net.sourceforge.pmd.lang.vm.ast;
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
- * under the License.    
+ * under the License.
  */
 
 import java.io.PrintWriter;
 import java.io.Writer;
 
-import net.sourceforge.pmd.lang.ast.AbstractNode;
-
 import org.apache.commons.lang3.text.StrBuilder;
+
+import net.sourceforge.pmd.lang.ast.AbstractNode;
 
 /**
  *
@@ -32,7 +33,8 @@ import org.apache.commons.lang3.text.StrBuilder;
 public class AbstractVmNode extends AbstractNode implements VmNode {
 
     /** */
-    // TODO - It seems that this field is only valid when parsing, and should not be kept around.
+    // TODO - It seems that this field is only valid when parsing, and should
+    // not be kept around.
     protected VmParser parser;
 
     /** */
@@ -69,9 +71,6 @@ public class AbstractVmNode extends AbstractNode implements VmNode {
         templateName = parser.currentTemplateName;
     }
 
-    /**
-     * @see org.apache.velocity.runtime.parser.node.Node#jjtOpen()
-     */
     @Override
     public void jjtOpen() {
         first = parser.getToken(1); // added
@@ -81,9 +80,6 @@ public class AbstractVmNode extends AbstractNode implements VmNode {
         }
     }
 
-    /**
-     * @see org.apache.velocity.runtime.parser.node.Node#jjtClose()
-     */
     @Override
     public void jjtClose() {
         last = parser.getToken(0); // added
@@ -104,32 +100,20 @@ public class AbstractVmNode extends AbstractNode implements VmNode {
         this.first = t;
     }
 
-    /**
-     * @see org.apache.velocity.runtime.parser.node.Node#getFirstToken()
-     */
     public Token getFirstToken() {
         return first;
     }
 
-    /**
-     * @see org.apache.velocity.runtime.parser.node.Node#getLastToken()
-     */
     public Token getLastToken() {
         return last;
     }
 
-    /**
-     * @see org.apache.velocity.runtime.parser.node.Node#jjtAccept(org.apache.velocity.runtime.parser.node.VmParserVisitor,
-     *      java.lang.Object)
-     */
+    @Override
     public Object jjtAccept(final VmParserVisitor visitor, final Object data) {
         return visitor.visit(this, data);
     }
 
-    /**
-     * @see org.apache.velocity.runtime.parser.node.Node#childrenAccept(org.apache.velocity.runtime.parser.node.VmParserVisitor,
-     *      java.lang.Object)
-     */
+    @Override
     public Object childrenAccept(final VmParserVisitor visitor, final Object data) {
         if (children != null) {
             for (int i = 0; i < children.length; ++i) {
@@ -139,15 +123,21 @@ public class AbstractVmNode extends AbstractNode implements VmNode {
         return data;
     }
 
+
+    @Override
+    public String getXPathNodeName() {
+        return VmParserTreeConstants.jjtNodeName[id];
+    }
+
     /*
-     * You can override these two methods in subclasses of SimpleNode to customize the way the node appears when the
-     * tree is dumped. If your output uses more than one line you should override toString(String), otherwise overriding
-     * toString() is probably all you need to do.
+     * You can override these two methods in subclasses of SimpleNode to
+     * customize the way the node appears when the tree is dumped. If your
+     * output uses more than one line you should override toString(String),
+     * otherwise overriding toString() is probably all you need to do.
      */
 
-     public String toString() {
-         return VmParserTreeConstants.jjtNodeName[id];
-     }
+
+
     /**
      * @param prefix
      * @return String representation of this node.
@@ -157,13 +147,15 @@ public class AbstractVmNode extends AbstractNode implements VmNode {
     }
 
     /**
-     * Override this method if you want to customize how the node dumps out its children.
-     * 
+     * Override this method if you want to customize how the node dumps out its
+     * children.
+     *
      * @param prefix
+     * @deprecated This method will be removed with PMD 7. The rule designer is a better way to inspect nodes.
      */
+    @Deprecated
     public void dump(final String prefix, final boolean recurse, final Writer writer) {
-        final PrintWriter printWriter = writer instanceof PrintWriter ? (PrintWriter) writer
-                : new PrintWriter(writer);
+        final PrintWriter printWriter = writer instanceof PrintWriter ? (PrintWriter) writer : new PrintWriter(writer);
         printWriter.println(toString(prefix));
         if (children != null && recurse) {
             for (int i = 0; i < children.length; ++i) {
@@ -177,8 +169,8 @@ public class AbstractVmNode extends AbstractNode implements VmNode {
 
     // All additional methods
 
-    /**
-     * @see org.apache.velocity.runtime.parser.node.Node#literal()
+    /*
+     * see org.apache.velocity.runtime.parser.node.Node#literal()
      */
     public String literal() {
         // if we have only one string, just return it and avoid
@@ -196,50 +188,50 @@ public class AbstractVmNode extends AbstractNode implements VmNode {
         return sb.toString();
     }
 
-    /**
-     * @see org.apache.velocity.runtime.parser.node.Node#getType()
+    /*
+     * see org.apache.velocity.runtime.parser.node.Node#getType()
      */
     public int getType() {
         return id;
     }
 
-    /**
-     * @see org.apache.velocity.runtime.parser.node.Node#setInfo(int)
+    /*
+     * see org.apache.velocity.runtime.parser.node.Node#setInfo(int)
      */
     public void setInfo(final int info) {
         this.info = info;
     }
 
-    /**
-     * @see org.apache.velocity.runtime.parser.node.Node#getInfo()
+    /*
+     * see org.apache.velocity.runtime.parser.node.Node#getInfo()
      */
     public int getInfo() {
         return info;
     }
 
-    /**
-     * @see org.apache.velocity.runtime.parser.node.Node#setInvalid()
+    /*
+     * see org.apache.velocity.runtime.parser.node.Node#setInvalid()
      */
     public void setInvalid() {
         invalid = true;
     }
 
-    /**
-     * @see org.apache.velocity.runtime.parser.node.Node#isInvalid()
+    /*
+     * see org.apache.velocity.runtime.parser.node.Node#isInvalid()
      */
     public boolean isInvalid() {
         return invalid;
     }
 
-    /**
-     * @see org.apache.velocity.runtime.parser.node.Node#getLine()
+    /*
+     * see org.apache.velocity.runtime.parser.node.Node#getLine()
      */
     public int getLine() {
         return first.beginLine;
     }
 
-    /**
-     * @see org.apache.velocity.runtime.parser.node.Node#getColumn()
+    /*
+     * see org.apache.velocity.runtime.parser.node.Node#getColumn()
      */
     public int getColumn() {
         return first.beginColumn;

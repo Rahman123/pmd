@@ -1,13 +1,17 @@
+/**
+ * BSD-style license; for more info see http://pmd.sourceforge.net/license.html
+ */
+
 package net.sourceforge.pmd.lang.java.ast;
 
+import static net.sourceforge.pmd.lang.java.ParserTstUtil.parseJava14;
 import static org.junit.Assert.assertEquals;
-import net.sourceforge.pmd.PMD;
-import net.sourceforge.pmd.lang.java.ParserTst;
 
 import org.junit.Test;
 
+import net.sourceforge.pmd.PMD;
 
-public class ASTLocalVariableDeclarationTest extends ParserTst {
+public class ASTLocalVariableDeclarationTest {
 
     @Test
     public void testSingleDimArray() {
@@ -30,22 +34,9 @@ public class ASTLocalVariableDeclarationTest extends ParserTst {
         assertEquals(3, node.getArrayDepth());
     }
 
-    private static final String TEST1 =
-            "class Foo {" + PMD.EOL +
-            " void bar() {int x[] = null;}" + PMD.EOL +
-            "}";
+    private static final String TEST1 = "class Foo {" + PMD.EOL + " void bar() {int x[] = null;}" + PMD.EOL + "}";
 
-    private static final String TEST2 =
-            "class Foo {" + PMD.EOL +
-            " void bar() {int x[][] = null;}" + PMD.EOL +
-            "}";
+    private static final String TEST2 = "class Foo {" + PMD.EOL + " void bar() {int x[][] = null;}" + PMD.EOL + "}";
 
-    private static final String TEST3 =
-            "class Foo {" + PMD.EOL +
-            " void bar() {int[] x[][] = null;}" + PMD.EOL +
-            "}";
-
-    public static junit.framework.Test suite() {
-        return new junit.framework.JUnit4TestAdapter(ASTLocalVariableDeclarationTest.class);
-    }
+    private static final String TEST3 = "class Foo {" + PMD.EOL + " void bar() {int[] x[][] = null;}" + PMD.EOL + "}";
 }

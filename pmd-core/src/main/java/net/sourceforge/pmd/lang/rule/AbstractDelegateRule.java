@@ -1,14 +1,13 @@
 /**
  * BSD-style license; for more info see http://pmd.sourceforge.net/license.html
  */
+
 package net.sourceforge.pmd.lang.rule;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import net.sourceforge.pmd.PropertyDescriptor;
-import net.sourceforge.pmd.PropertySource;
 import net.sourceforge.pmd.Rule;
 import net.sourceforge.pmd.RuleContext;
 import net.sourceforge.pmd.RulePriority;
@@ -16,213 +15,337 @@ import net.sourceforge.pmd.lang.Language;
 import net.sourceforge.pmd.lang.LanguageVersion;
 import net.sourceforge.pmd.lang.ParserOptions;
 import net.sourceforge.pmd.lang.ast.Node;
+import net.sourceforge.pmd.properties.MultiValuePropertyDescriptor;
+import net.sourceforge.pmd.properties.PropertyDescriptor;
+import net.sourceforge.pmd.properties.PropertySource;
 
 /**
  * Base class for Rule implementations which delegate to another Rule instance.
+ *
+ * @deprecated This is only relevant to {@link RuleReference}, but prevents sharing the implementation
+ * of {@link net.sourceforge.pmd.properties.AbstractPropertySource}. Will be removed in 7.0.0
  */
+@Deprecated
 public abstract class AbstractDelegateRule implements Rule {
 
-	private Rule rule;
+    private Rule rule;
 
-	public void setRule(Rule rule) {
-		this.rule = rule;
-	}
+    public Rule getRule() {
+        return rule;
+    }
 
-	public Rule getRule() {
-		return rule;
-	}
 
-	public Language getLanguage() {
-		return rule.getLanguage();
-	}
+    /**
+     * @deprecated This will be removed in 7.0.0
+     * I mark it specially deprecated because it's inherited by rule reference,
+     * even though a RuleReference has no business setting its rule after construction
+     */
+    @Deprecated
+    public void setRule(Rule rule) {
+        this.rule = rule;
+    }
 
-	public void setLanguage(Language language) {
-		rule.setLanguage(language);
-	}
+    @Override
+    public Language getLanguage() {
+        return rule.getLanguage();
+    }
 
-	public LanguageVersion getMinimumLanguageVersion() {
-		return rule.getMinimumLanguageVersion();
-	}
+    @Override
+    public void setLanguage(Language language) {
+        rule.setLanguage(language);
+    }
 
-	public void setMinimumLanguageVersion(LanguageVersion minimumlanguageVersion) {
-		rule.setMinimumLanguageVersion(minimumlanguageVersion);
-	}
+    @Override
+    public LanguageVersion getMinimumLanguageVersion() {
+        return rule.getMinimumLanguageVersion();
+    }
 
-	public void setMaximumLanguageVersion(LanguageVersion maximumlanguageVersion) {
-		rule.setMaximumLanguageVersion(maximumlanguageVersion);
-	}
+    @Override
+    public void setMinimumLanguageVersion(LanguageVersion minimumlanguageVersion) {
+        rule.setMinimumLanguageVersion(minimumlanguageVersion);
+    }
 
-	public LanguageVersion getMaximumLanguageVersion() {
-		return rule.getMaximumLanguageVersion();
-	}
+    @Override
+    public LanguageVersion getMaximumLanguageVersion() {
+        return rule.getMaximumLanguageVersion();
+    }
 
-	public boolean isDeprecated() {
-		return rule.isDeprecated();
-	}
+    @Override
+    public void setMaximumLanguageVersion(LanguageVersion maximumlanguageVersion) {
+        rule.setMaximumLanguageVersion(maximumlanguageVersion);
+    }
 
-	/**
-	 * @see PropertySource#dysfunctionReason()
-	 */
-	public String dysfunctionReason() {
-		return rule.dysfunctionReason();
-	}
+    @Override
+    public boolean isDeprecated() {
+        return rule.isDeprecated();
+    }
 
-	public Set<PropertyDescriptor<?>> ignoredProperties() {
-		return rule.ignoredProperties();
-	}
+    @Override
+    public void setDeprecated(boolean deprecated) {
+        rule.setDeprecated(deprecated);
+    }
 
-	public void setDeprecated(boolean deprecated) {
-		rule.setDeprecated(deprecated);
-	}
+    /**
+     * @see PropertySource#dysfunctionReason()
+     */
+    @Override
+    public String dysfunctionReason() {
+        return rule.dysfunctionReason();
+    }
 
-	public String getName() {
-		return rule.getName();
-	}
+    @Override
+    public Set<PropertyDescriptor<?>> ignoredProperties() {
+        return rule.ignoredProperties();
+    }
 
-	public void setName(String name) {
-		rule.setName(name);
-	}
+    @Override
+    public String getName() {
+        return rule.getName();
+    }
 
-	public String getSince() {
-		return rule.getSince();
-	}
+    @Override
+    public void setName(String name) {
+        rule.setName(name);
+    }
 
-	public void setSince(String since) {
-		rule.setSince(since);
-	}
+    @Override
+    public String getSince() {
+        return rule.getSince();
+    }
 
-	public String getRuleClass() {
-		return rule.getRuleClass();
-	}
+    @Override
+    public void setSince(String since) {
+        rule.setSince(since);
+    }
 
-	public void setRuleClass(String ruleClass) {
-		rule.setRuleClass(ruleClass);
-	}
+    @Override
+    public String getRuleClass() {
+        return rule.getRuleClass();
+    }
 
-	public String getRuleSetName() {
-		return rule.getRuleSetName();
-	}
+    @Override
+    public void setRuleClass(String ruleClass) {
+        rule.setRuleClass(ruleClass);
+    }
 
-	public void setRuleSetName(String name) {
-		rule.setRuleSetName(name);
-	}
+    @Override
+    public String getRuleSetName() {
+        return rule.getRuleSetName();
+    }
 
-	public String getMessage() {
-		return rule.getMessage();
-	}
+    @Override
+    public void setRuleSetName(String name) {
+        rule.setRuleSetName(name);
+    }
 
-	public void setMessage(String message) {
-		rule.setMessage(message);
-	}
+    @Override
+    public String getMessage() {
+        return rule.getMessage();
+    }
 
-	public String getDescription() {
-		return rule.getDescription();
-	}
+    @Override
+    public void setMessage(String message) {
+        rule.setMessage(message);
+    }
 
-	public void setDescription(String description) {
-		rule.setDescription(description);
-	}
+    @Override
+    public String getDescription() {
+        return rule.getDescription();
+    }
 
-	public List<String> getExamples() {
-		return rule.getExamples();
-	}
+    @Override
+    public void setDescription(String description) {
+        rule.setDescription(description);
+    }
 
-	public void addExample(String example) {
-		rule.addExample(example);
-	}
+    @Override
+    public List<String> getExamples() {
+        return rule.getExamples();
+    }
 
-	public String getExternalInfoUrl() {
-		return rule.getExternalInfoUrl();
-	}
+    @Override
+    public void addExample(String example) {
+        rule.addExample(example);
+    }
 
-	public void setExternalInfoUrl(String url) {
-		rule.setExternalInfoUrl(url);
-	}
+    @Override
+    public String getExternalInfoUrl() {
+        return rule.getExternalInfoUrl();
+    }
 
-	public RulePriority getPriority() {
-		return rule.getPriority();
-	}
+    @Override
+    public void setExternalInfoUrl(String url) {
+        rule.setExternalInfoUrl(url);
+    }
 
-	public void setPriority(RulePriority priority) {
-		rule.setPriority(priority);
-	}
+    @Override
+    public RulePriority getPriority() {
+        return rule.getPriority();
+    }
 
-	public ParserOptions getParserOptions() {
-	    return rule.getParserOptions();
-	}
+    @Override
+    public void setPriority(RulePriority priority) {
+        rule.setPriority(priority);
+    }
 
-	public void definePropertyDescriptor(PropertyDescriptor<?> propertyDescriptor) throws IllegalArgumentException {
-	    rule.definePropertyDescriptor(propertyDescriptor);
-	}
+    @Override
+    public ParserOptions getParserOptions() {
+        return rule.getParserOptions();
+    }
 
-	public PropertyDescriptor<?> getPropertyDescriptor(String name) {
-	    return rule.getPropertyDescriptor(name);
-	}
+    @Override
+    public void definePropertyDescriptor(PropertyDescriptor<?> propertyDescriptor) throws IllegalArgumentException {
+        rule.definePropertyDescriptor(propertyDescriptor);
+    }
 
-	public List<PropertyDescriptor<?>> getPropertyDescriptors() {
-	    return rule.getPropertyDescriptors();
-	}
+    @Override
+    public PropertyDescriptor<?> getPropertyDescriptor(String name) {
+        return rule.getPropertyDescriptor(name);
+    }
 
-	public <T> T getProperty(PropertyDescriptor<T> propertyDescriptor) {
-	    return rule.getProperty(propertyDescriptor);
-	}
+    @Override
+    public List<PropertyDescriptor<?>> getPropertyDescriptors() {
+        return rule.getPropertyDescriptors();
+    }
 
-	public <T> void setProperty(PropertyDescriptor<T> propertyDescriptor, T value) {
-	    rule.setProperty(propertyDescriptor, value);
-	}
+    @Override
+    public <T> T getProperty(PropertyDescriptor<T> propertyDescriptor) {
+        return rule.getProperty(propertyDescriptor);
+    }
 
-	public Map<PropertyDescriptor<?>, Object> getPropertiesByPropertyDescriptor() {
-	    return rule.getPropertiesByPropertyDescriptor();
-	}
+    @Override
+    public <T> void setProperty(PropertyDescriptor<T> propertyDescriptor, T value) {
+        rule.setProperty(propertyDescriptor, value);
+    }
 
-	public void setUsesDFA() {
-		 rule.setUsesDFA();
-	 }
 
-	 public boolean usesDFA() {
-		 return rule.usesDFA();
-	 }
+    @Override
+    public <V> void setProperty(MultiValuePropertyDescriptor<V> propertyDescriptor, V... values) {
+        rule.setProperty(propertyDescriptor, values);
+    }
 
-	 public void setUsesTypeResolution() {
-		 rule.setUsesTypeResolution();
-	 }
+    @Override
+    public boolean isPropertyOverridden(PropertyDescriptor<?> propertyDescriptor) {
+        return rule.isPropertyOverridden(propertyDescriptor);
+    }
 
-	 public boolean usesTypeResolution() {
-		 return rule.usesTypeResolution();
-	 }
+    @Override
+    public Map<PropertyDescriptor<?>, Object> getPropertiesByPropertyDescriptor() {
+        return rule.getPropertiesByPropertyDescriptor();
+    }
 
-	 public boolean usesRuleChain() {
-		 return rule.usesRuleChain();
-	 }
+    @Override
+    @Deprecated // To be removed in PMD 7.0.0
+    public void setUsesDFA() {
+        rule.setDfa(true);
+    }
 
-	 public List<String> getRuleChainVisits() {
-		 return rule.getRuleChainVisits();
-	 }
+    @Override
+    public void setDfa(boolean isDfa) {
+        rule.setDfa(isDfa);
+    }
 
-	 public void addRuleChainVisit(Class<? extends Node> nodeClass) {
-		 rule.addRuleChainVisit(nodeClass);
-	 }
+    @Override
+    @Deprecated // To be removed in PMD 7.0.0
+    public boolean usesDFA() {
+        return rule.isDfa();
+    }
 
-	 public void addRuleChainVisit(String astNodeName) {
-		 rule.addRuleChainVisit(astNodeName);
-	 }
+    @Override
+    public boolean isDfa() {
+        return rule.isDfa();
+    }
 
-	 public void start(RuleContext ctx) {
-		 rule.start(ctx);
-	 }
+    @Override
+    @Deprecated // To be removed in PMD 7.0.0
+    public void setUsesTypeResolution() {
+        rule.setTypeResolution(true);
+    }
 
-	 public void apply(List<? extends Node> nodes, RuleContext ctx) {
-		 rule.apply(nodes, ctx);
-	 }
+    @Override
+    public void setTypeResolution(boolean usingTypeResolution) {
+        rule.setTypeResolution(usingTypeResolution);
+    }
 
-	 public void end(RuleContext ctx) {
-		 rule.end(ctx);
-	 }
+    @Override
+    @Deprecated // To be removed in PMD 7.0.0
+    public boolean usesTypeResolution() {
+        return rule.isTypeResolution();
+    }
+
+    @Override
+    public boolean isTypeResolution() {
+        return rule.isTypeResolution();
+    }
+
+    @Override
+    @Deprecated // To be removed in PMD 7.0.0
+    public void setUsesMultifile() {
+        rule.setMultifile(true);
+    }
+
+    @Override
+    public void setMultifile(boolean multifile) {
+        rule.setMultifile(multifile);
+    }
+
+    @Override
+    @Deprecated // To be removed in PMD 7.0.0
+    public boolean usesMultifile() {
+        return rule.isMultifile();
+    }
+
+    @Override
+    public boolean isMultifile() {
+        return rule.isMultifile();
+    }
+
+    @Override
+    @Deprecated // To be removed in PMD 7.0.0
+    public boolean usesRuleChain() {
+        return rule.isRuleChain();
+    }
+
+    @Override
+    public boolean isRuleChain() {
+        return rule.isRuleChain();
+    }
+
+    @Override
+    public List<String> getRuleChainVisits() {
+        return rule.getRuleChainVisits();
+    }
+
+    @Override
+    public void addRuleChainVisit(Class<? extends Node> nodeClass) {
+        rule.addRuleChainVisit(nodeClass);
+    }
+
+    @Override
+    public void addRuleChainVisit(String astNodeName) {
+        rule.addRuleChainVisit(astNodeName);
+    }
+
+    @Override
+    public void start(RuleContext ctx) {
+        rule.start(ctx);
+    }
+
+    @Override
+    public void apply(List<? extends Node> nodes, RuleContext ctx) {
+        rule.apply(nodes, ctx);
+    }
+
+    @Override
+    public void end(RuleContext ctx) {
+        rule.end(ctx);
+    }
 
     /**
      * @see Rule#hasDescriptor(PropertyDescriptor)
      */
+    @Override
     public boolean hasDescriptor(PropertyDescriptor<?> descriptor) {
-    	return rule.hasDescriptor(descriptor);
+        return rule.hasDescriptor(descriptor);
     }
 }

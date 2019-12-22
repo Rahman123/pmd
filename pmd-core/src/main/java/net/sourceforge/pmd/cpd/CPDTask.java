@@ -1,10 +1,16 @@
 /**
  * BSD-style license; for more info see http://pmd.sourceforge.net/license.html
  */
+
 package net.sourceforge.pmd.cpd;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -17,23 +23,29 @@ import org.apache.tools.ant.Task;
 import org.apache.tools.ant.types.EnumeratedAttribute;
 import org.apache.tools.ant.types.FileSet;
 
+import net.sourceforge.pmd.cpd.renderer.CPDRenderer;
+
 /**
  * CPDTask
- * <p/>
- * Runs the CPD utility via ant. The ant task looks like this:
- * <p/>
- * <project name="CPDProj" default="main" basedir=".">
- * <taskdef name="cpd" classname="net.sourceforge.pmd.cpd.CPDTask" />
- * <target name="main">
- * <cpd encoding="UTF-16LE" language="java" ignoreIdentifiers="true" ignoreLiterals="true" ignoreAnnotations="true" minimumTokenCount="100" outputFile="c:\cpdrun.txt">
- * <fileset dir="/path/to/my/src">
- * <include name="*.java"/>
- * </fileset>
- * </cpd>
- * </target>
- * </project>
- * <p/>
- * Required: minimumTokenCount, outputFile, and at least one file
+ * 
+ * <p>Runs the CPD utility via ant. The ant task looks like this:</p>
+ * 
+ * <pre>
+ * &lt;project name="CPDProj" default="main" basedir="."&gt;
+ *   &lt;taskdef name="cpd" classname="net.sourceforge.pmd.cpd.CPDTask" /&gt;
+ *   &lt;target name="main"&gt;
+ *     &lt;cpd encoding="UTF-16LE" language="java" ignoreIdentifiers="true"
+ *          ignoreLiterals="true" ignoreAnnotations="true" minimumTokenCount="100"
+ *          outputFile="c:\cpdrun.txt"&gt;
+ *       &lt;fileset dir="/path/to/my/src"&gt;
+ *         &lt;include name="*.java"/&gt;
+ *       &lt;/fileset&gt;
+ *     &lt;/cpd&gt;
+ *   &lt;/target&gt;
+ * &lt;/project&gt;
+ * </pre>
+ * 
+ * <p>Required: minimumTokenCount, outputFile, and at least one file</p>
  */
 public class CPDTask extends Task {
 
@@ -56,6 +68,7 @@ public class CPDTask extends Task {
     private String encoding = System.getProperty("file.encoding");
     private List<FileSet> filesets = new ArrayList<>();
 
+    @Override
     public void execute() throws BuildException {
         ClassLoader oldClassloader = Thread.currentThread().getContextClassLoader();
         Thread.currentThread().setContextClassLoader(CPDTask.class.getClassLoader());
@@ -117,24 +130,38 @@ public class CPDTask extends Task {
         if (!cpd.getMatches().hasNext()) {
             log("No duplicates over " + minimumTokenCount + " tokens found", Project.MSG_INFO);
         }
-        Renderer renderer = createRenderer();
-        FileReporter reporter;
-        if (outputFile == null) {
-        	reporter = new FileReporter(encoding);
-        } else if (outputFile.isAbsolute()) {
-            reporter = new FileReporter(outputFile, encoding);
-        } else {
-            reporter = new FileReporter(new File(getProject().getBaseDir(), outputFile.toString()), encoding);
+        CPDRenderer renderer = createRenderer();
+        
+        try {
+            // will be closed via BufferedWriter/OutputStreamWriter chain down below
+            final OutputStream os;
+            if (outputFile == null) {
+                os = System.out;
+            } else if (outputFile.isAbsolute()) {
+                os = Files.newOutputStream(outputFile.toPath());
+            } else {
+                os = Files.newOutputStream(new File(getProject().getBaseDir(), outputFile.toString()).toPath());
+            }
+            
+            if (encoding == null) {
+                encoding = System.getProperty("file.encoding");
+            }
+            
+            try (Writer writer = new BufferedWriter(new OutputStreamWriter(os, encoding))) {
+                renderer.render(cpd.getMatches(), writer);
+            }
+        } catch (IOException ioe) {
+            throw new ReportException(ioe);
         }
-        reporter.report(renderer.render(cpd.getMatches()));
     }
 
     private void tokenizeFiles(CPD cpd) throws IOException {
-        for (FileSet fileSet: filesets) {
+        for (FileSet fileSet : filesets) {
             DirectoryScanner directoryScanner = fileSet.getDirectoryScanner(getProject());
             String[] includedFiles = directoryScanner.getIncludedFiles();
             for (int i = 0; i < includedFiles.length; i++) {
-                File file = new File(directoryScanner.getBasedir() + System.getProperty("file.separator") + includedFiles[i]);
+                File file = new File(
+                        directoryScanner.getBasedir() + System.getProperty("file.separator") + includedFiles[i]);
                 log("Tokenizing " + file.getAbsolutePath(), Project.MSG_VERBOSE);
                 cpd.add(file);
             }
@@ -148,7 +175,7 @@ public class CPDTask extends Task {
         return stop - start;
     }
 
-    private Renderer createRenderer() {
+    private CPDRenderer createRenderer() {
         if (format.equals(TEXT_FORMAT)) {
             return new SimpleRenderer();
         } else if (format.equals(CSV_FORMAT)) {
@@ -229,7 +256,9 @@ public class CPDTask extends Task {
     }
 
     public static class FormatAttribute extends EnumeratedAttribute {
-        private static final String[] FORMATS = new String[]{XML_FORMAT, TEXT_FORMAT, CSV_FORMAT};
+        private static final String[] FORMATS = new String[] { XML_FORMAT, TEXT_FORMAT, CSV_FORMAT };
+
+        @Override
         public String[] getValues() {
             return FORMATS;
         }

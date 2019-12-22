@@ -1,6 +1,7 @@
 /**
  * BSD-style license; for more info see http://pmd.sourceforge.net/license.html
  */
+
 package net.sourceforge.pmd.lang.ecmascript.ast;
 
 import org.mozilla.javascript.ast.TryStatement;
@@ -13,6 +14,7 @@ public class ASTTryStatement extends AbstractEcmascriptNode<TryStatement> {
     /**
      * Accept the visitor.
      */
+    @Override
     public Object jjtAccept(EcmascriptParserVisitor visitor, Object data) {
         return visitor.visit(this, data);
     }
@@ -27,7 +29,7 @@ public class ASTTryStatement extends AbstractEcmascriptNode<TryStatement> {
     }
 
     public boolean hasCatch() {
-	return getNumCatchClause() != 0;
+        return getNumCatchClause() != 0;
     }
 
     public int getNumCatchClause() {

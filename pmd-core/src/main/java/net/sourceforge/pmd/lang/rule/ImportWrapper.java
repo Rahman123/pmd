@@ -1,10 +1,12 @@
 /**
  * BSD-style license; for more info see http://pmd.sourceforge.net/license.html
  */
+
 package net.sourceforge.pmd.lang.rule;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -34,6 +36,18 @@ public class ImportWrapper {
             for (Field f : type.getFields()) {
                 allDemands.add(f.getName());
             }
+            // also consider static fields, that are not public
+            for (Field f : type.getDeclaredFields()) {
+                if (Modifier.isStatic(f.getModifiers())) {
+                    allDemands.add(f.getName());
+                }
+            }
+            // and methods, too
+            for (Method m : type.getDeclaredMethods()) {
+                if (Modifier.isStatic(m.getModifiers())) {
+                    allDemands.add(m.getName());
+                }
+            }
         }
     }
 
@@ -44,21 +58,22 @@ public class ImportWrapper {
         this.isStaticDemand = isStaticDemand;
     }
 
+    @Override
     public boolean equals(Object other) {
-    	if (other == null) {
-    	    return false;
-    	}
-    	if (other == this) {
-    	    return true;
-    	}
-    	if (other instanceof ImportWrapper) {
-	        ImportWrapper i = (ImportWrapper) other;
-	        if (name == null && i.getName() == null) {
-	            return i.getFullName().equals(fullname);
-	        }
-	        return i.getName().equals(name);
-    	}
-    	return false;
+        if (other == null) {
+            return false;
+        }
+        if (other == this) {
+            return true;
+        }
+        if (other instanceof ImportWrapper) {
+            ImportWrapper i = (ImportWrapper) other;
+            if (name == null) {
+                return fullname.equals(i.getFullName());
+            }
+            return name.equals(i.getName());
+        }
+        return false;
     }
 
     public boolean matches(ImportWrapper i) {
@@ -73,8 +88,9 @@ public class ImportWrapper {
         return i.getName().equals(name);
     }
 
+    @Override
     public int hashCode() {
-        if(name == null){
+        if (name == null) {
             return fullname.hashCode();
         }
         return name.hashCode();
@@ -98,7 +114,6 @@ public class ImportWrapper {
 
     @Override
     public String toString() {
-        return "Import[name=" + name + ",fullname=" + fullname + ",static*=" + isStaticDemand + "]";
+        return "Import[name=" + name + ",fullname=" + fullname + ",static*=" + isStaticDemand + ']';
     }
 }
-

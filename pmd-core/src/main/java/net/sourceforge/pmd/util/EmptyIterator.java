@@ -1,17 +1,24 @@
 /**
  * BSD-style license; for more info see http://pmd.sourceforge.net/license.html
  */
+
 package net.sourceforge.pmd.util;
 
+import java.util.Collections;
 import java.util.Iterator;
+
+import net.sourceforge.pmd.annotation.InternalApi;
 
 /**
  * A singleton iterator that never has anything.
- * 
+ *
  * @author Brian Remedios
  *
  * @param <T>
+ * @deprecated Use {@link Collections#emptyIterator()}
  */
+@InternalApi
+@Deprecated
 public final class EmptyIterator<T extends Object> implements Iterator<T> {
 
     @SuppressWarnings("rawtypes")
@@ -22,7 +29,7 @@ public final class EmptyIterator<T extends Object> implements Iterator<T> {
 
     @SuppressWarnings("unchecked")
     public static <T extends Object> Iterator<T> instance() {
-        return INSTANCE;
+        return Collections.emptyIterator();
     }
 
     @Override

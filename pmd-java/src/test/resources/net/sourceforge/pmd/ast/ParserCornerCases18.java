@@ -17,7 +17,7 @@ import java.util.stream.Stream;
  * Java 8 language syntax
  * 
  * @see <a href="http://cr.openjdk.java.net/~briangoetz/lambda/lambda-state-final.html">State of the Lambda</a>
- * @see <a href="http://download.java.net/jdk8/docs/api/java/util/function/package-summary.html">java.util.function</a>
+ * @see <a href="https://docs.oracle.com/javase/8/docs/api/java/util/function/package-summary.html">java.util.function</a>
  */
 public class ParserCornerCases18 {
 
@@ -54,19 +54,30 @@ public class ParserCornerCases18 {
 
         // grammar/parser: don't get confused with this...
         int initialSizeGlobal = (int) (profilingContext.m_profileItems.size() * (150.0 * 0.30));
+
+        BiConsumer<String, Integer> lambda2 = (String s, Integer i) -> { i++; };
+        BiConsumer<String, Integer> lambda2a = (s, i) -> { i++; };
+        TriConsumer<String, Integer, Double> lambda3 = (String s, Integer i, Double d) -> { d += i; };
+        TriConsumer<String, Integer, Double> lambda3a = (s, i, d) -> { d += i; };
     }
+
+    @FunctionalInterface
+    public interface TriConsumer<A, B, C> {
+        void accept(A a, B b, C c);
+    }
+
     Runnable r1 = () -> { System.out.println(this); };
-    
+
     public Runnable toDoLater() {
         return () -> {
           System.out.println("later");
         };
     }
-    
+
     private String doPrivileged(PrivilegedAction<String> action) {
         return action.run();
     }
-    
+
     private void filterFiles(FileFilter[] filters) {
     }
 
@@ -153,6 +164,36 @@ public class ParserCornerCases18 {
             };
         }
     }
+
+    public List<@AnnotatedUsage ?> testWildCardWithAnnotation() {
+        return null;
+    }
+    
+    public Object @Nullable [] testAnnotationsToArrayElements() {
+        return null;
+    }
+    
+    private byte @Nullable [] getBytes(){
+        return null;
+    }
+    
+    public static <T extends @NonNull Enum<?>> T getEnum() {
+        return null;
+    }
+
+    public static <T> @Nullable T getNullableEnum() {
+        return null;
+    }
+    
+    public Object[] createNonNullArray() {
+        return new Object @NonNull[0];
+    }
+    
+    private static void testMultiDimArrayWithAnnotations() {
+        // ever used a 3D-Array in java??
+        Object x = new Object @NonNull[2] @Nullable[1] @NonNull[3];
+    }
+
 
     /**
      * Explicit receiver Parameters

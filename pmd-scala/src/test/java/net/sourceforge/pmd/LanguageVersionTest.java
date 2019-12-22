@@ -1,16 +1,17 @@
 /**
  * BSD-style license; for more info see http://pmd.sourceforge.net/license.html
  */
+
 package net.sourceforge.pmd;
 
 import java.util.Arrays;
 import java.util.Collection;
 
+import org.junit.runners.Parameterized.Parameters;
+
 import net.sourceforge.pmd.lang.LanguageRegistry;
 import net.sourceforge.pmd.lang.LanguageVersion;
 import net.sourceforge.pmd.lang.scala.ScalaLanguageModule;
-
-import org.junit.runners.Parameterized.Parameters;
 
 public class LanguageVersionTest extends AbstractLanguageVersionTest {
 
@@ -21,7 +22,13 @@ public class LanguageVersionTest extends AbstractLanguageVersionTest {
     @Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][] {
-                { ScalaLanguageModule.NAME, ScalaLanguageModule.TERSE_NAME, "", LanguageRegistry.getLanguage(ScalaLanguageModule.NAME).getDefaultVersion() }
-            });
+            { ScalaLanguageModule.NAME, ScalaLanguageModule.TERSE_NAME, "2.13",
+                LanguageRegistry.getLanguage(ScalaLanguageModule.NAME).getVersion("2.13"), },
+            { ScalaLanguageModule.NAME, ScalaLanguageModule.TERSE_NAME, "2.12",
+                LanguageRegistry.getLanguage(ScalaLanguageModule.NAME).getVersion("2.12"), },
+            { ScalaLanguageModule.NAME, ScalaLanguageModule.TERSE_NAME, "2.11",
+                LanguageRegistry.getLanguage(ScalaLanguageModule.NAME).getVersion("2.11"), },
+            { ScalaLanguageModule.NAME, ScalaLanguageModule.TERSE_NAME, "2.10",
+                LanguageRegistry.getLanguage(ScalaLanguageModule.NAME).getVersion("2.10"), }, });
     }
 }

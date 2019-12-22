@@ -1,6 +1,7 @@
 /**
  * BSD-style license; for more info see http://pmd.sourceforge.net/license.html
  */
+
 package net.sourceforge.pmd.util.database;
 
 import java.io.File;
@@ -10,7 +11,6 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.ResourceBundle;
 
-import org.apache.commons.io.IOUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -38,23 +38,19 @@ public class DBTypeTest {
         includeProperties.putAll(testProperties);
         includeProperties.put("prop3", "include3");
 
-        PrintStream printStream = null;
-        try {
-            absoluteFile = File.createTempFile("dbtypetest", ".properties");
-            FileOutputStream fileOutputStream = new FileOutputStream(absoluteFile);
-            printStream = new PrintStream(fileOutputStream);
-
+        absoluteFile = File.createTempFile("dbtypetest", ".properties");
+        try (FileOutputStream fileOutputStream = new FileOutputStream(absoluteFile);
+             PrintStream printStream = new PrintStream(fileOutputStream)) {
             for (Entry<?, ?> entry : testProperties.entrySet()) {
                 printStream.printf("%s=%s\n", entry.getKey(), entry.getValue());
             }
-        } finally {
-            IOUtils.closeQuietly(printStream);
         }
     }
 
     @After
     public void tearDown() throws Exception {
         testProperties = null;
+        absoluteFile.delete();
     }
 
     /**
@@ -112,7 +108,7 @@ public class DBTypeTest {
     @Test
     public void testAsProperties() {
         System.out.println("asProperties");
-        ResourceBundle bundle = ResourceBundle.getBundle(DBType.class.getCanonicalName() + ".test");
+        ResourceBundle bundle = ResourceBundle.getBundle(DBType.class.getPackage().getName() + ".test");
         Properties expResult = testProperties;
         Properties result = DBType.getResourceBundleAsProperties(bundle);
         Assert.assertEquals(expResult, result);

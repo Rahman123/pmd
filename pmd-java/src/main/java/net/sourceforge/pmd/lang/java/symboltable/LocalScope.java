@@ -1,15 +1,17 @@
 /**
  * BSD-style license; for more info see http://pmd.sourceforge.net/license.html
  */
+
 package net.sourceforge.pmd.lang.java.symboltable;
 
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import net.sourceforge.pmd.lang.ast.Node;
 import net.sourceforge.pmd.lang.java.ast.ASTName;
+import net.sourceforge.pmd.lang.symboltable.Applier;
 import net.sourceforge.pmd.lang.symboltable.NameDeclaration;
 import net.sourceforge.pmd.lang.symboltable.NameOccurrence;
 
@@ -22,6 +24,7 @@ public class LocalScope extends AbstractJavaScope {
         return getDeclarations(VariableNameDeclaration.class);
     }
 
+    @Override
     public Set<NameDeclaration> addNameOccurrence(NameOccurrence occurrence) {
         JavaNameOccurrence javaOccurrence = (JavaNameOccurrence) occurrence;
         Set<NameDeclaration> declarations = findVariableHere(javaOccurrence);
@@ -38,6 +41,7 @@ public class LocalScope extends AbstractJavaScope {
         return declarations;
     }
 
+    @Override
     public void addDeclaration(NameDeclaration nameDecl) {
         if (!(nameDecl instanceof VariableNameDeclaration || nameDecl instanceof ClassNameDeclaration)) {
             throw new IllegalArgumentException(
@@ -47,19 +51,20 @@ public class LocalScope extends AbstractJavaScope {
         super.addDeclaration(nameDecl);
     }
 
+    @Override
     public Set<NameDeclaration> findVariableHere(JavaNameOccurrence occurrence) {
-        Set<NameDeclaration> result = new HashSet<>();
         if (occurrence.isThisOrSuper() || occurrence.isMethodOrConstructorInvocation()) {
-            return result;
+            return Collections.emptySet();
         }
         DeclarationFinderFunction finder = new DeclarationFinderFunction(occurrence);
         Applier.apply(finder, getVariableDeclarations().keySet().iterator());
         if (finder.getDecl() != null) {
-            result.add(finder.getDecl());
+            return Collections.singleton(finder.getDecl());
         }
-        return result;
+        return Collections.emptySet();
     }
 
+    @Override
     public String toString() {
         return "LocalScope:" + glomNames(getVariableDeclarations().keySet());
     }

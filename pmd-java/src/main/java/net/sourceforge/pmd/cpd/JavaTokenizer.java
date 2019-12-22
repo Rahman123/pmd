@@ -1,21 +1,25 @@
 /**
  * BSD-style license; for more info see http://pmd.sourceforge.net/license.html
  */
+
 package net.sourceforge.pmd.cpd;
 
+import java.io.IOException;
 import java.io.StringReader;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.Properties;
 
-import net.sourceforge.pmd.lang.LanguageRegistry;
-import net.sourceforge.pmd.lang.LanguageVersionHandler;
+import net.sourceforge.pmd.cpd.internal.JavaCCTokenizer;
+import net.sourceforge.pmd.cpd.token.JavaCCTokenFilter;
+import net.sourceforge.pmd.cpd.token.TokenFilter;
 import net.sourceforge.pmd.lang.TokenManager;
-import net.sourceforge.pmd.lang.java.JavaLanguageModule;
+import net.sourceforge.pmd.lang.ast.GenericToken;
+import net.sourceforge.pmd.lang.java.JavaTokenManager;
 import net.sourceforge.pmd.lang.java.ast.JavaParserConstants;
 import net.sourceforge.pmd.lang.java.ast.Token;
 
-public class JavaTokenizer implements Tokenizer {
+public class JavaTokenizer extends JavaCCTokenizer {
 
     public static final String CPD_START = "\"CPD-START\"";
     public static final String CPD_END = "\"CPD-END\"";
@@ -23,59 +27,52 @@ public class JavaTokenizer implements Tokenizer {
     private boolean ignoreAnnotations;
     private boolean ignoreLiterals;
     private boolean ignoreIdentifiers;
-    
+
+    private ConstructorDetector constructorDetector;
+
     public void setProperties(Properties properties) {
         ignoreAnnotations = Boolean.parseBoolean(properties.getProperty(IGNORE_ANNOTATIONS, "false"));
         ignoreLiterals = Boolean.parseBoolean(properties.getProperty(IGNORE_LITERALS, "false"));
         ignoreIdentifiers = Boolean.parseBoolean(properties.getProperty(IGNORE_IDENTIFIERS, "false"));
     }
 
-    public void tokenize(SourceCode sourceCode, Tokens tokenEntries) {
-        StringBuilder stringBuilder = sourceCode.getCodeBuffer();
-
-        // Note that Java version is irrelevant for tokenizing
-        LanguageVersionHandler languageVersionHandler = LanguageRegistry.getLanguage(JavaLanguageModule.NAME).getVersion("1.4").getLanguageVersionHandler();
-        String fileName = sourceCode.getFileName();
-        TokenManager tokenMgr = languageVersionHandler.getParser(languageVersionHandler.getDefaultParserOptions()).getTokenManager(
-                fileName, new StringReader(stringBuilder.toString()));
-        Token currentToken = (Token) tokenMgr.getNextToken();
-
-        TokenDiscarder discarder = new TokenDiscarder(ignoreAnnotations);
-        ConstructorDetector constructorDetector = new ConstructorDetector(ignoreIdentifiers);
-
-        while (currentToken.image.length() > 0) {
-            discarder.updateState(currentToken);
-
-            if (discarder.isDiscarding()) {
-                currentToken = (Token) tokenMgr.getNextToken();
-                continue;
-            }
-
-            processToken(tokenEntries, fileName, currentToken, constructorDetector);
-            currentToken = (Token) tokenMgr.getNextToken();
-        }
-        tokenEntries.add(TokenEntry.getEOF());
+    @Override
+    public void tokenize(SourceCode sourceCode, Tokens tokenEntries) throws IOException {
+        constructorDetector = new ConstructorDetector(ignoreIdentifiers);
+        super.tokenize(sourceCode, tokenEntries);
     }
 
-    private void processToken(Tokens tokenEntries, String fileName, Token currentToken, ConstructorDetector constructorDetector) {
-        String image = currentToken.image;
-        
-        constructorDetector.restoreConstructorToken(tokenEntries, currentToken);
-        
-        if (ignoreLiterals
-                && (currentToken.kind == JavaParserConstants.STRING_LITERAL
-                || currentToken.kind == JavaParserConstants.CHARACTER_LITERAL
-                || currentToken.kind == JavaParserConstants.DECIMAL_LITERAL
-                || currentToken.kind == JavaParserConstants.FLOATING_POINT_LITERAL)) {
-            image = String.valueOf(currentToken.kind);
+    @Override
+    protected TokenManager getLexerForSource(SourceCode sourceCode) {
+        final StringBuilder stringBuilder = sourceCode.getCodeBuffer();
+        return new JavaTokenManager(new StringReader(stringBuilder.toString()));
+    }
+
+    @Override
+    protected TokenFilter getTokenFilter(TokenManager tokenManager) {
+        return new JavaTokenFilter(tokenManager, ignoreAnnotations);
+    }
+
+    @Override
+    protected TokenEntry processToken(Tokens tokenEntries, GenericToken currentToken, String fileName) {
+        String image = currentToken.getImage();
+        Token javaToken = (Token) currentToken;
+
+        constructorDetector.restoreConstructorToken(tokenEntries, javaToken);
+
+        if (ignoreLiterals && (javaToken.kind == JavaParserConstants.STRING_LITERAL
+                || javaToken.kind == JavaParserConstants.CHARACTER_LITERAL
+                || javaToken.kind == JavaParserConstants.DECIMAL_LITERAL
+                || javaToken.kind == JavaParserConstants.FLOATING_POINT_LITERAL)) {
+            image = String.valueOf(javaToken.kind);
         }
-        if (ignoreIdentifiers && currentToken.kind == JavaParserConstants.IDENTIFIER) {
-            image = String.valueOf(currentToken.kind);
+        if (ignoreIdentifiers && javaToken.kind == JavaParserConstants.IDENTIFIER) {
+            image = String.valueOf(javaToken.kind);
         }
-        
-        constructorDetector.processToken(currentToken);
-        
-        tokenEntries.add(new TokenEntry(image, fileName, currentToken.beginLine));
+
+        constructorDetector.processToken(javaToken);
+
+        return new TokenEntry(image, fileName, currentToken.getBeginLine());
     }
 
     public void setIgnoreLiterals(boolean ignore) {
@@ -91,15 +88,14 @@ public class JavaTokenizer implements Tokenizer {
     }
 
     /**
-     * The {@link TokenDiscarder} consumes token by token and maintains state.
-     * It can detect, whether the current token belongs to an annotation and whether
-     * the current token should be discarded by CPD.
+     * The {@link JavaTokenFilter} extends the {@link JavaCCTokenFilter} to discard
+     * Java-specific tokens.
      * <p>
-     * By default, it discards semicolons, package and import statements, and enables CPD suppression.
-     * Optionally, all annotations can be ignored, too.
+     * By default, it discards semicolons, package and import statements, and
+     * enables annotation-based CPD suppression. Optionally, all annotations can be ignored, too.
      * </p>
      */
-    private static class TokenDiscarder {
+    private static class JavaTokenFilter extends JavaCCTokenFilter {
         private boolean isAnnotation = false;
         private boolean nextTokenEndsAnnotation = false;
         private int annotationStack = 0;
@@ -110,22 +106,24 @@ public class JavaTokenizer implements Tokenizer {
         private boolean discardingAnnotations = false;
         private boolean ignoreAnnotations = false;
 
-        public TokenDiscarder(boolean ignoreAnnotations) {
+        JavaTokenFilter(final TokenManager tokenManager, final boolean ignoreAnnotations) {
+            super(tokenManager);
             this.ignoreAnnotations = ignoreAnnotations;
         }
 
-        public void updateState(Token currentToken) {
-            detectAnnotations(currentToken);
+        @Override
+        protected void analyzeToken(final GenericToken currentToken) {
+            detectAnnotations((Token) currentToken);
 
-            skipSemicolon(currentToken);
-            skipPackageAndImport(currentToken);
-            skipCPDSuppression(currentToken);
+            skipSemicolon((Token) currentToken);
+            skipPackageAndImport((Token) currentToken);
+            skipAnnotationSuppression((Token) currentToken);
             if (ignoreAnnotations) {
                 skipAnnotations();
             }
         }
 
-        public void skipPackageAndImport(Token currentToken) {
+        private void skipPackageAndImport(final Token currentToken) {
             if (currentToken.kind == JavaParserConstants.PACKAGE || currentToken.kind == JavaParserConstants.IMPORT) {
                 discardingKeywords = true;
             } else if (discardingKeywords && currentToken.kind == JavaParserConstants.SEMICOLON) {
@@ -133,7 +131,7 @@ public class JavaTokenizer implements Tokenizer {
             }
         }
 
-        public void skipSemicolon(Token currentToken) {
+        private void skipSemicolon(final Token currentToken) {
             if (currentToken.kind == JavaParserConstants.SEMICOLON) {
                 discardingSemicolon = true;
             } else if (discardingSemicolon && currentToken.kind != JavaParserConstants.SEMICOLON) {
@@ -141,18 +139,20 @@ public class JavaTokenizer implements Tokenizer {
             }
         }
 
-        public void skipCPDSuppression(Token currentToken) {
-            //if processing an annotation, look for a CPD-START or CPD-END
+        private void skipAnnotationSuppression(final Token currentToken) {
+            // if processing an annotation, look for a CPD-START or CPD-END
             if (isAnnotation) {
-                if (!discardingSuppressing && currentToken.kind == JavaParserConstants.STRING_LITERAL && CPD_START.equals(currentToken.image)) {
+                if (!discardingSuppressing && currentToken.kind == JavaParserConstants.STRING_LITERAL
+                        && CPD_START.equals(currentToken.image)) {
                     discardingSuppressing = true;
-                } else if (discardingSuppressing && currentToken.kind == JavaParserConstants.STRING_LITERAL && CPD_END.equals(currentToken.image)) {
+                } else if (discardingSuppressing && currentToken.kind == JavaParserConstants.STRING_LITERAL
+                        && CPD_END.equals(currentToken.image)) {
                     discardingSuppressing = false;
                 }
             }
         }
 
-        public void skipAnnotations() {
+        private void skipAnnotations() {
             if (!discardingAnnotations && isAnnotation) {
                 discardingAnnotations = true;
             } else if (discardingAnnotations && !isAnnotation) {
@@ -160,12 +160,13 @@ public class JavaTokenizer implements Tokenizer {
             }
         }
 
-        public boolean isDiscarding() {
-            boolean result = discardingSemicolon || discardingKeywords || discardingAnnotations || discardingSuppressing;
-            return result;
+        @Override
+        protected boolean isLanguageSpecificDiscarding() {
+            return discardingSemicolon || discardingKeywords || discardingAnnotations
+                    || discardingSuppressing;
         }
 
-        public void detectAnnotations(Token currentToken) {
+        private void detectAnnotations(Token currentToken) {
             if (isAnnotation && nextTokenEndsAnnotation) {
                 isAnnotation = false;
                 nextTokenEndsAnnotation = false;
@@ -178,7 +179,8 @@ public class JavaTokenizer implements Tokenizer {
                     if (annotationStack == 0) {
                         nextTokenEndsAnnotation = true;
                     }
-                } else if (annotationStack == 0 && currentToken.kind != JavaParserConstants.IDENTIFIER &&  currentToken.kind != JavaParserConstants.LPAREN) {
+                } else if (annotationStack == 0 && currentToken.kind != JavaParserConstants.IDENTIFIER
+                        && currentToken.kind != JavaParserConstants.LPAREN) {
                     isAnnotation = false;
                 }
             }
@@ -187,82 +189,112 @@ public class JavaTokenizer implements Tokenizer {
             }
         }
     }
-    
+
     /**
-     * The {@link ConstructorDetector} consumes token by token and maintains state.
-     * It can detect, whether the current token belongs to a constructor method identifier
-     * and if so, is able to restore it when using ignoreIdentifiers.
+     * The {@link ConstructorDetector} consumes token by token and maintains
+     * state. It can detect, whether the current token belongs to a constructor
+     * method identifier and if so, is able to restore it when using
+     * ignoreIdentifiers.
      */
     private static class ConstructorDetector {
         private boolean ignoreIdentifiers;
-        
-        private Deque<Integer> classMembersIndentations;
+
+        private Deque<TypeDeclaration> classMembersIndentations;
         private int currentNestingLevel;
-        private boolean constructorCandidate;
+        private boolean storeNextIdentifier;
         private String prevIdentifier;
-        
-        public ConstructorDetector(boolean ignoreIdentifiers) {
+
+        ConstructorDetector(boolean ignoreIdentifiers) {
             this.ignoreIdentifiers = ignoreIdentifiers;
-            
+
             currentNestingLevel = 0;
-            classMembersIndentations = new LinkedList<Integer>();
+            classMembersIndentations = new LinkedList<>();
         }
-        
+
         public void processToken(Token currentToken) {
             if (!ignoreIdentifiers) {
                 return;
             }
-            
+
             switch (currentToken.kind) {
             case JavaParserConstants.IDENTIFIER:
-                // Could this be a constructor?
-                if (constructorCandidate && (!classMembersIndentations.isEmpty() && classMembersIndentations.peek().intValue() == currentNestingLevel)) {
-                    prevIdentifier = currentToken.image;
+                if ("enum".equals(currentToken.image)) {
+                    // If declaring an enum, add a new block nesting level at
+                    // which constructors may exist
+                    pushTypeDeclaration();
+                } else if (storeNextIdentifier) {
+                    classMembersIndentations.peek().name = currentToken.image;
+                    storeNextIdentifier = false;
                 }
+
+                // Store this token
+                prevIdentifier = currentToken.image;
                 break;
-                
+
             case JavaParserConstants.CLASS:
-                // If declaring a class, add a new block nesting level at which constructors may exist
-                classMembersIndentations.push(currentNestingLevel + 1);
+                // If declaring a class, add a new block nesting level at which
+                // constructors may exist
+                pushTypeDeclaration();
                 break;
-                
+
             case JavaParserConstants.LBRACE:
                 currentNestingLevel++;
                 break;
-                
+
             case JavaParserConstants.RBRACE:
                 // Discard completed blocks
-                if (classMembersIndentations.peek() == currentNestingLevel) {
+                if (!classMembersIndentations.isEmpty()
+                        && classMembersIndentations.peek().indentationLevel == currentNestingLevel) {
                     classMembersIndentations.pop();
                 }
                 currentNestingLevel--;
                 break;
+
+            default:
+                /*
+                 * Did we find a "class" token not followed by an identifier? i.e:
+                 * expectThrows(IllegalStateException.class, () -> {
+                 *  newSearcher(r).search(parentQuery.build(), c);
+                 * });
+                 */
+                if (storeNextIdentifier) {
+                    classMembersIndentations.pop();
+                    storeNextIdentifier = false;
+                }
+                break;
             }
-            
-            // Can the next token be a constructor identifier?
-            constructorCandidate = currentToken.kind == JavaParserConstants.PRIVATE
-                    || currentToken.kind == JavaParserConstants.PROTECTED
-                    || currentToken.kind == JavaParserConstants.PUBLIC
-                    || currentToken.kind == JavaParserConstants.LBRACE
-                    || currentToken.kind == JavaParserConstants.RBRACE;
         }
-        
+
+        private void pushTypeDeclaration() {
+            TypeDeclaration cd = new TypeDeclaration(currentNestingLevel + 1);
+            classMembersIndentations.push(cd);
+            storeNextIdentifier = true;
+        }
+
         public void restoreConstructorToken(Tokens tokenEntries, Token currentToken) {
             if (!ignoreIdentifiers) {
                 return;
             }
-            
-            if (prevIdentifier != null) {
-                // was the previous token a constructor? If so, restore the identifier
-                if (currentToken.kind == JavaParserConstants.LPAREN) {
+
+            if (currentToken.kind == JavaParserConstants.LPAREN) {
+                // was the previous token a constructor? If so, restore the
+                // identifier
+                if (!classMembersIndentations.isEmpty()
+                        && classMembersIndentations.peek().name.equals(prevIdentifier)) {
                     int lastTokenIndex = tokenEntries.size() - 1;
                     TokenEntry lastToken = tokenEntries.getTokens().get(lastTokenIndex);
-                    tokenEntries.getTokens().set(lastTokenIndex,
-                        new TokenEntry(prevIdentifier, lastToken.getTokenSrcID(), lastToken.getBeginLine()));
+                    lastToken.setImage(prevIdentifier);
                 }
-                
-                prevIdentifier = null;
             }
+        }
+    }
+
+    private static class TypeDeclaration {
+        int indentationLevel;
+        String name;
+
+        TypeDeclaration(int indentationLevel) {
+            this.indentationLevel = indentationLevel;
         }
     }
 }
